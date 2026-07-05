@@ -14,6 +14,7 @@ TODOseq provides several commands that can be accessed through Obsidian's Comman
 - TODOseq: Migrate task to today _(editor only)_
 - TODOseq: Add scheduled date _(editor only)_
 - TODOseq: Add deadline date _(editor only)_
+- TODOseq: Add description _(editor only)_
 - TODOseq: Set priority high _(editor only)_
 - TODOseq: Set priority medium _(editor only)_
 - TODOseq: Set priority low _(editor only)_
@@ -96,6 +97,24 @@ Add a deadline date to the task at the current cursor position, defaulted to the
 TODO example task
 DEADLINE: <2026-01-16>
 ```
+
+### Add description
+
+Add a description line to the task at the current cursor position. If the task already has a description, the cursor moves to the end of the existing description text for editing.
+
+```txt
+TODO example task
+DESCRIPTION:
+```
+
+After typing:
+
+```txt
+TODO example task
+DESCRIPTION: Pick up milk, eggs, and bread
+```
+
+The description line is inserted immediately after the task line.
 
 ### Set priority high/medium/low
 

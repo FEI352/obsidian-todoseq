@@ -759,6 +759,7 @@ export class TaskParser implements ITaskParser {
     deadlineDateRepeat: DateRepeatInfo | null;
     scheduledWarningPeriod: WarningPeriodInfo | null;
     deadlineWarningPeriod: WarningPeriodInfo | null;
+    description: string | null;
   } {
     let scheduledDate: Date | null = null;
     let scheduledDateRepeat: DateRepeatInfo | null = null;
@@ -767,6 +768,7 @@ export class TaskParser implements ITaskParser {
     let closedDate: Date | null = null;
     let scheduledWarningPeriod: WarningPeriodInfo | null = null;
     let deadlineWarningPeriod: WarningPeriodInfo | null = null;
+    let description: string | null = null;
 
     let scheduledFound = false;
     let deadlineFound = false;
@@ -820,6 +822,15 @@ export class TaskParser implements ITaskParser {
           );
         }
       } else {
+        // Check for DESCRIPTION: line
+        const descText = this.getDescriptionText(nextLine);
+        if (descText !== null) {
+          if (descText.length > 0) {
+            description = descText;
+          }
+          continue; // Don't break — keep looking for dates
+        }
+
         // Stop looking for date lines if we encounter a non-empty line that's not a date line
         // or if we've already found scheduled, deadline, and closed dates
         if (
@@ -839,7 +850,24 @@ export class TaskParser implements ITaskParser {
       deadlineDateRepeat,
       scheduledWarningPeriod,
       deadlineWarningPeriod,
+      description,
     };
+  }
+
+  /**
+   * Extract description text from a DESCRIPTION: line, or null if not a description line.
+   */
+  private getDescriptionText(line: string): string | null {
+    let contentLine = line;
+    if (line.startsWith('>')) {
+      const quoteMatch = line.match(/^(>\s*)+/);
+      if (quoteMatch) {
+        contentLine = line.substring(quoteMatch[0].length);
+      }
+    }
+    const trimmed = contentLine.trimStart();
+    if (!trimmed.startsWith('DESCRIPTION:')) return null;
+    return trimmed.substring('DESCRIPTION:'.length).trim();
   }
 
   /**
@@ -988,6 +1016,11 @@ export class TaskParser implements ITaskParser {
       // Check if this is a date line - skip it
       const dateLineType = this.getDateLineType(nextLine, indent);
       if (dateLineType !== null) {
+        continue;
+      }
+
+      // Check if this is a description line - skip it
+      if (this.getDescriptionText(nextLine) !== null) {
         continue;
       }
 
@@ -1703,6 +1736,7 @@ export class TaskParser implements ITaskParser {
       indent: taskDetails.indent,
       listMarker: finalListMarker,
       text: cleanedText,
+      description: undefined,
       state: finalState,
       completed: finalCompleted,
       priority,
@@ -1736,6 +1770,7 @@ export class TaskParser implements ITaskParser {
       deadlineDateRepeat,
       scheduledWarningPeriod,
       deadlineWarningPeriod,
+      description,
     } = this.extractTaskDates(lines, index + 1, taskDetails.indent);
 
     task.scheduledDate = scheduledDate;
@@ -1745,6 +1780,7 @@ export class TaskParser implements ITaskParser {
     task.closedDate = closedDate;
     task.scheduledWarningPeriod = scheduledWarningPeriod;
     task.deadlineWarningPeriod = deadlineWarningPeriod;
+    task.description = description ?? undefined;
 
     // Extract subtasks from lines following date lines
     // Check if parent task has a checkbox (use CHECKBOX_DETECTION_REGEX to detect

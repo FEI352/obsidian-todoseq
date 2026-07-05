@@ -169,6 +169,9 @@ export class ReaderViewFormatter {
       // Process SCHEDULED and DEADLINE lines
       this.processDateLines(element);
 
+      // Process DESCRIPTION lines
+      this.processDescriptionLines(element);
+
       // Attach checkbox click handlers for task state toggling
       this.attachCheckboxClickHandlers(element, context);
 
@@ -1780,6 +1783,89 @@ export class ReaderViewFormatter {
   }
 
   /**
+   * Process DESCRIPTION: lines in reader view.
+   */
+  private processDescriptionLines(element: HTMLElement): void {
+    // Fast precheck: skip if no DESCRIPTION: in document
+    if (!element.textContent?.includes('DESCRIPTION:')) return;
+
+    const paragraphs = element.querySelectorAll('p');
+
+    paragraphs.forEach((paragraph) => {
+      const text = paragraph.textContent || '';
+
+      // Quick check: skip paragraphs without DESCRIPTION keyword
+      if (!text.includes('DESCRIPTION:')) {
+        return;
+      }
+
+      // Check if this description line is associated with a task
+      if (!this.hasPrecedingTask(paragraph)) {
+        return;
+      }
+
+      // Find the text node containing DESCRIPTION: and wrap all content after it
+      const result = this.findDateKeywordNode(paragraph, 'DESCRIPTION:');
+      if (result) {
+        this.wrapDescriptionLine(paragraph, result.node, result.index);
+      }
+    });
+  }
+
+  /**
+   * Wrap DESCRIPTION: keyword and all subsequent content in a styled span.
+   * This handles markdown formatting (bold, italic, etc.) that may be in separate DOM nodes.
+   */
+  private wrapDescriptionLine(
+    paragraph: HTMLParagraphElement,
+    keywordNode: Text,
+    keywordIndex: number,
+  ): void {
+    const nodeText = keywordNode.textContent || '';
+    const beforeText = nodeText.substring(0, keywordIndex);
+
+    const descContainer = window.activeDocument.createElement('span');
+    descContainer.className = 'todoseq-task-description';
+    descContainer.setAttribute('data-description-line', 'true');
+    descContainer.setAttribute('role', 'note');
+
+    // Add text before DESCRIPTION:
+    if (beforeText) {
+      keywordNode.parentNode?.insertBefore(
+        window.activeDocument.createTextNode(beforeText),
+        keywordNode,
+      );
+    }
+
+    // Add the keyword
+    descContainer.createSpan({
+      cls: 'todoseq-description-keyword',
+      text: 'DESCRIPTION:',
+    });
+
+    // Add text after DESCRIPTION: on the same node
+    const afterKeywordText = nodeText.substring(
+      keywordIndex + 'DESCRIPTION:'.length,
+    );
+    if (afterKeywordText) {
+      descContainer.appendChild(
+        window.activeDocument.createTextNode(afterKeywordText),
+      );
+    }
+
+    // Collect and move all subsequent sibling nodes into the container
+    let nextSibling = keywordNode.nextSibling;
+    while (nextSibling) {
+      const sibling = nextSibling;
+      nextSibling = sibling.nextSibling;
+      descContainer.appendChild(sibling);
+    }
+
+    // Replace the original keyword node with our container
+    keywordNode.parentNode?.replaceChild(descContainer, keywordNode);
+  }
+
+  /**
    * Check if a paragraph has a preceding task (in siblings or within the paragraph)
    */
   private hasPrecedingTask(paragraph: HTMLParagraphElement): boolean {
@@ -1832,65 +1918,25 @@ export class ReaderViewFormatter {
 
       if (node.nodeType === Node.TEXT_NODE) {
         const nodeText = node.textContent || '';
-
-        // Check if this text node contains a date keyword
-        const scheduledIndex = nodeText.indexOf('SCHEDULED:');
-        const deadlineIndex = nodeText.indexOf('DEADLINE:');
-        const closedIndex = nodeText.indexOf('CLOSED:');
-        const dateIndex =
-          scheduledIndex >= 0
-            ? deadlineIndex >= 0
-              ? closedIndex >= 0
-                ? Math.min(scheduledIndex, deadlineIndex, closedIndex)
-                : Math.min(scheduledIndex, deadlineIndex)
-              : closedIndex >= 0
-                ? Math.min(scheduledIndex, closedIndex)
-                : scheduledIndex
-            : deadlineIndex >= 0
-              ? closedIndex >= 0
-                ? Math.min(deadlineIndex, closedIndex)
-                : deadlineIndex
-              : closedIndex;
+        const dateIndex = this.findFirstKeywordIndex(nodeText);
 
         if (dateIndex >= 0) {
-          // Found the date line - check text before it
           textBeforeDate += nodeText.substring(0, dateIndex);
           dateLineFound = true;
         } else {
           textBeforeDate += nodeText;
         }
       } else if (node.nodeName === 'BR') {
-        // Check text accumulated before this <br>
         if (this.containsTaskKeyword(textBeforeDate.trim())) {
           return true;
         }
         textBeforeDate = '';
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // For element nodes (like spans), check their text content
         const element = node as HTMLElement;
         const elementText = element.textContent || '';
-
-        // Check if this element contains a date keyword
-        const scheduledIndex = elementText.indexOf('SCHEDULED:');
-        const deadlineIndex = elementText.indexOf('DEADLINE:');
-        const closedIndex = elementText.indexOf('CLOSED:');
-        const dateIndex =
-          scheduledIndex >= 0
-            ? deadlineIndex >= 0
-              ? closedIndex >= 0
-                ? Math.min(scheduledIndex, deadlineIndex, closedIndex)
-                : Math.min(scheduledIndex, deadlineIndex)
-              : closedIndex >= 0
-                ? Math.min(scheduledIndex, closedIndex)
-                : scheduledIndex
-            : deadlineIndex >= 0
-              ? closedIndex >= 0
-                ? Math.min(deadlineIndex, closedIndex)
-                : deadlineIndex
-              : closedIndex;
+        const dateIndex = this.findFirstKeywordIndex(elementText);
 
         if (dateIndex >= 0) {
-          // Found the date line - check text before it
           textBeforeDate += elementText.substring(0, dateIndex);
           dateLineFound = true;
         } else {
@@ -2071,6 +2117,15 @@ export class ReaderViewFormatter {
   /**
    * Check if a text contains a task keyword
    */
+  private findFirstKeywordIndex(text: string): number {
+    const si = text.indexOf('SCHEDULED:');
+    const di = text.indexOf('DEADLINE:');
+    const ci = text.indexOf('CLOSED:');
+    const dsi = text.indexOf('DESCRIPTION:');
+    const indices = [si, di, ci, dsi].filter((i) => i >= 0);
+    return indices.length > 0 ? Math.min(...indices) : -1;
+  }
+
   private containsTaskKeyword(text: string): boolean {
     const taskParser = this.getTaskParser();
     if (!taskParser) {

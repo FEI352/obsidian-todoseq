@@ -15,6 +15,8 @@ import {
   getSubtaskDisplayText,
   hasSubtasks,
   getTaskTextDisplay,
+  buildDescriptionDisplay,
+  stripDescriptionMarkdown,
 } from '../../utils/task-utils';
 import { KeywordManager } from '../../utils/keyword-manager';
 import type { TaskStateTransitionManager } from '../../services/task-state-transition-manager';
@@ -523,6 +525,22 @@ export class TaskItemRenderer {
       this.buildSubtaskIndicator(task, mainContent);
     }
 
+    // Add description display if description exists
+    const settings = this.keywordManager.getSettings();
+    const descMode = settings.taskDescriptionDisplay ?? 'hide';
+    if (task.description) {
+      if (descMode === 'show') {
+        this.buildDescriptionDisplay(task, li);
+      } else {
+        // Hide mode: icon only, flows inline with title
+        const iconEl = textWrapper.createSpan({
+          cls: 'todoseq-task-description-icon',
+        });
+        setIcon(iconEl, 'text');
+        setTooltip(iconEl, stripDescriptionMarkdown(task.description));
+      }
+    }
+
     // Add date display if scheduled, deadline, or closed dates exist
     const hasDatesToShow =
       (!task.completed && (task.scheduledDate || task.deadlineDate)) ||
@@ -615,6 +633,8 @@ export class TaskItemRenderer {
     // 3. Update todoseq-task-text: rebuild the text portion (after keyword and priority)
     // ONLY rebuild if the underlying raw text actually changed (smart diff)
     const currentRawText = element.getAttribute('data-raw-text');
+    const settings = this.keywordManager.getSettings();
+    const descMode = settings.taskDescriptionDisplay ?? 'hide';
     const textChanged = currentRawText !== task.rawText;
 
     if (textChanged) {
@@ -725,6 +745,54 @@ export class TaskItemRenderer {
       existingIndicator.remove();
     }
 
+    // 4b. Update description display
+    const fileInfoElement = element.querySelector('.todoseq-task-file-info');
+    const hasDescription = !!task.description;
+
+    // Always clean up both modes first
+    const existingInlineIcon = element.querySelector(
+      '.todoseq-task-text-wrapper > .todoseq-task-description-icon',
+    );
+    const existingDescDisplay = element.querySelector(
+      '.todoseq-task-description',
+    );
+
+    if (descMode === 'hide') {
+      // Hide mode: icon only, remove show-mode description div
+      existingDescDisplay?.remove();
+      if (hasDescription) {
+        const strippedDesc = stripDescriptionMarkdown(task.description ?? '');
+        if (existingInlineIcon) {
+          setTooltip(existingInlineIcon as HTMLElement, strippedDesc);
+        } else {
+          const textWrapper = element.querySelector(
+            '.todoseq-task-text-wrapper',
+          );
+          if (textWrapper) {
+            const iconEl = textWrapper.createSpan({
+              cls: 'todoseq-task-description-icon',
+            });
+            setIcon(iconEl, 'text');
+            setTooltip(iconEl, strippedDesc);
+          }
+        }
+      } else {
+        existingInlineIcon?.remove();
+      }
+    } else {
+      // Show mode: icon + description text, remove any inline icon
+      existingInlineIcon?.remove();
+      if (hasDescription) {
+        if (existingDescDisplay) {
+          existingDescDisplay.remove();
+        }
+        const newDescEl = this.buildDescriptionDisplay(task, element);
+        if (fileInfoElement) element.insertBefore(newDescEl, fileInfoElement);
+      } else {
+        existingDescDisplay?.remove();
+      }
+    }
+
     // 5. Update date display
     const hasDates =
       (!task.completed && (task.scheduledDate || task.deadlineDate)) ||
@@ -732,7 +800,6 @@ export class TaskItemRenderer {
     const existingDateDisplay = element.querySelector(
       '.todoseq-task-date-container',
     );
-    const fileInfoElement = element.querySelector('.todoseq-task-file-info');
     if (existingDateDisplay) {
       if (hasDates) {
         existingDateDisplay.remove();
@@ -998,6 +1065,18 @@ export class TaskItemRenderer {
     }
 
     return dateContainer;
+  }
+
+  /**
+   * Build description display element for a task
+   */
+  buildDescriptionDisplay(task: Task, parent: HTMLElement): HTMLElement {
+    const [descEl, iconEl] = buildDescriptionDisplay(
+      parent,
+      task.description ?? '',
+    );
+    setIcon(iconEl, 'text');
+    return descEl;
   }
 
   /**

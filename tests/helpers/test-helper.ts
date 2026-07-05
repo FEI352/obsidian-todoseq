@@ -48,6 +48,7 @@ export function createBaseTask(overrides: Partial<Task> = {}): Task {
     indent: '',
     listMarker: '',
     text: 'Task text',
+    description: undefined,
     state: 'TODO',
     completed: false,
     priority: null,

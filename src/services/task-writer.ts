@@ -6,6 +6,7 @@ import { DateUtils } from '../utils/date-utils';
 import { buildWarningPeriodString } from '../utils/date-repeater';
 import {
   findDateLine,
+  findDescriptionLine,
   getTaskIndent,
   getDateLineIndent,
 } from '../utils/task-line-utils';
@@ -1278,8 +1279,9 @@ export class TaskWriter {
    * Calculate the line index where a new date line should be inserted.
    *
    * Insertion rules (all indices relative to task.line):
-   * - SCHEDULED: before DEADLINE (if exists), else after task
-   * - DEADLINE:  after SCHEDULED (if exists), else after task
+   * - DESCRIPTION: always inserted at taskLineIndex + 1
+   * - SCHEDULED: before DEADLINE (if exists), else after DESCRIPTION (if exists), else after task
+   * - DEADLINE:  after SCHEDULED (if exists), else after DESCRIPTION (if exists), else after task
    * - CLOSED:    after DEADLINE (if exists), else after SCHEDULED (if exists), else after task
    */
   private calcDateLineInsertIndex(
@@ -1289,48 +1291,52 @@ export class TaskWriter {
     taskIndent: string,
   ): number {
     const kwManager = this.keywordManager;
+    const afterTask = taskLineIndex + 1;
+
+    // Find DESCRIPTION position (dates must go after it)
+    const descIdx = findDescriptionLine(lines, afterTask, taskIndent);
+    const afterDesc = descIdx >= 0 ? descIdx + 1 : afterTask;
+
     if (dateType === 'SCHEDULED') {
+      // Insert before DEADLINE (if exists), else after DESCRIPTION
       const deadlineIdx = findDateLine(
         lines,
-        taskLineIndex + 1,
+        afterTask,
         'DEADLINE',
         taskIndent,
         kwManager,
       );
-      return deadlineIdx >= 0 ? deadlineIdx : taskLineIndex + 1;
+      return deadlineIdx >= 0 ? deadlineIdx : afterDesc;
     }
     if (dateType === 'DEADLINE') {
+      // Insert after SCHEDULED (if exists), else after DESCRIPTION
       const scheduledIdx = findDateLine(
         lines,
-        taskLineIndex + 1,
+        afterTask,
         'SCHEDULED',
         taskIndent,
         kwManager,
       );
-      return scheduledIdx >= 0 ? scheduledIdx + 1 : taskLineIndex + 1;
+      return scheduledIdx >= 0 ? scheduledIdx + 1 : afterDesc;
     }
-    // CLOSED
+    // CLOSED - insert after DEADLINE or SCHEDULED
     const deadlineIdx = findDateLine(
       lines,
-      taskLineIndex + 1,
+      afterTask,
       'DEADLINE',
       taskIndent,
       kwManager,
     );
-    if (deadlineIdx >= 0) {
-      return deadlineIdx + 1;
-    }
+    if (deadlineIdx >= 0) return deadlineIdx + 1;
     const scheduledIdx = findDateLine(
       lines,
-      taskLineIndex + 1,
+      afterTask,
       'SCHEDULED',
       taskIndent,
       kwManager,
     );
-    if (scheduledIdx >= 0) {
-      return scheduledIdx + 1;
-    }
-    return taskLineIndex + 1;
+    if (scheduledIdx >= 0) return scheduledIdx + 1;
+    return afterDesc;
   }
 
   /**

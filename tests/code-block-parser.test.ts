@@ -482,4 +482,50 @@ collapse: true`;
       );
     });
   });
+
+  describe('show-description parameter', () => {
+    it('should parse show-description: true', () => {
+      const source = 'search: tag:test\nshow-description: true';
+      const params = TodoseqCodeBlockParser.parse(source);
+      expect(params.showDescription).toBe('show');
+    });
+
+    it('should parse show-description: false', () => {
+      const source = 'search: tag:test\nshow-description: false';
+      const params = TodoseqCodeBlockParser.parse(source);
+      expect(params.showDescription).toBe('hide');
+    });
+
+    it('should parse show-description: show', () => {
+      const source = 'search: tag:test\nshow-description: show';
+      const params = TodoseqCodeBlockParser.parse(source);
+      expect(params.showDescription).toBe('show');
+    });
+
+    it('should parse show-description: hide', () => {
+      const source = 'search: tag:test\nshow-description: hide';
+      const params = TodoseqCodeBlockParser.parse(source);
+      expect(params.showDescription).toBe('hide');
+    });
+
+    it('should default to undefined when not specified', () => {
+      const source = 'search: tag:test';
+      const params = TodoseqCodeBlockParser.parse(source);
+      expect(params.showDescription).toBeUndefined();
+    });
+
+    it('should error on invalid show-description value', () => {
+      const source = 'search: tag:test\nshow-description: invalid';
+      const params = TodoseqCodeBlockParser.parse(source);
+      expect(params.error).toContain('Invalid show-description option');
+    });
+
+    it('should parse show-description with wrap-content', () => {
+      const source =
+        'search: tag:test\nshow-description: true\nwrap-content: dynamic';
+      const params = TodoseqCodeBlockParser.parse(source);
+      expect(params.showDescription).toBe('show');
+      expect(params.wrapContent).toBe('dynamic');
+    });
+  });
 });

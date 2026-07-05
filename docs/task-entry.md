@@ -35,6 +35,32 @@ DONE Triage customer feedback
    * DONE Task with indented bullet
 ```
 
+### Task with Description
+
+Tasks can have an associated description using the `DESCRIPTION:` keyword. The description appears as a styled line below the task in the Task List view. Markdown formatting (bold, italic, links) is stripped for display in task lists.
+
+```markdown
+- TODO Write documentation
+DESCRIPTION: Cover all new features and settings
+SCHEDULED: <2026-01-20>
+```
+
+**Rules:**
+
+- Description is a single line (multi-line descriptions are not supported)
+- The `DESCRIPTION:` keyword is case-sensitive
+- DESCRIPTION: is always inserted immediately after the task line
+- Date lines (SCHEDULED, DEADLINE, CLOSED) appear after DESCRIPTION:
+
+**Example with checkbox:**
+
+```markdown
+- [ ] TODO Buy groceries
+DESCRIPTION: Pick up milk, eggs, and bread
+SCHEDULED: <2026-01-16>
+DEADLINE: <2026-01-18>
+```
+
 ## Supported Task Formats
 
 TODOseq supports two main task formats:

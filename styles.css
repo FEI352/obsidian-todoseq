@@ -454,7 +454,7 @@
   color: var(--text-muted);
   font-size: 0.75rem;
   flex-shrink: 0;
-  align-self: center;
+  align-self: flex-start;
 }
 
 .todoseq-panel .todoseq-subtask-indicator {
@@ -610,6 +610,67 @@
 .markdown-preview-view .todoseq-deadline-line,
 .markdown-preview-view .todoseq-closed-line {
   display: inline-block; /* Ensure it doesn't affect the entire paragraph */
+}
+
+/* Description line - editor and reader preview */
+:is(.cm-editor, .markdown-preview-view) .todoseq-task-description {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  display: inline;
+}
+
+/* Description in main task list - smaller font */
+.todoseq-panel .todoseq-task-description {
+  font-size: 0.75rem;
+}
+
+/* Description icon in main task list - match font size to avoid line spacing issues */
+.todoseq-panel .todoseq-task-description-icon svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Description line - source mode */
+.markdown-source-view:not(.is-live-preview) .todoseq-task-description {
+  font-size: inherit;
+  display: inline;
+}
+
+/* Description line - reader preview inline */
+.markdown-preview-view .todoseq-task-description {
+  display: inline;
+}
+
+/* Description icon - matches repeat icon styling */
+.todoseq-task-description-icon {
+  opacity: 0.8;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: var(--size-2-2);
+}
+
+/* Icon-only mode: add left margin to separate from task title */
+.todoseq-task-text-wrapper .todoseq-task-description-icon {
+  margin-left: var(--size-2-2);
+}
+
+.todoseq-embedded-task-text-container .todoseq-task-description-icon {
+  align-self: center;
+}
+
+.todoseq-panel .todoseq-task-description-icon {
+  align-items: center;
+}
+
+.todoseq-task-description-icon svg,
+.todoseq-embedded-task-text-container .todoseq-task-description-icon svg,
+.todoseq-panel .todoseq-task-description-icon svg {
+  width: 0.9rem;
+}
+
+/* Description text */
+.todoseq-task-description-text {
+  color: var(--text-muted);
 }
 
 :is(.cm-editor, .markdown-preview-view) .todoseq-scheduled-keyword,
@@ -871,6 +932,8 @@
 /* Task text needs block-like behavior for ellipsis */
 .todoseq-embedded-task-text-container > .todoseq-embedded-task-text {
   display: inline-block;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Task state */
@@ -1021,6 +1084,58 @@
   word-break: break-word;
 }
 
+/* Wrap content mode - description on separate line */
+.todoseq-embedded-task-text-wrap .todoseq-task-description {
+  display: block;
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+/* No-wrap and dynamic modes - shrink priority: filename > description > title */
+.todoseq-embedded-task-text-container:not(.todoseq-embedded-task-text-wrap)
+  .todoseq-embedded-task-text {
+  flex: 0 3 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.todoseq-embedded-task-text-container:not(.todoseq-embedded-task-text-wrap)
+  .todoseq-task-description {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 1.2em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-left: var(--size-2-2);
+}
+
+.todoseq-embedded-task-text-container:not(.todoseq-embedded-task-text-wrap)
+  .todoseq-task-description-icon {
+  flex-shrink: 0;
+}
+
+.todoseq-embedded-task-text-container:not(.todoseq-embedded-task-text-wrap)
+  .todoseq-task-description-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.todoseq-embedded-task-text-container:not(.todoseq-embedded-task-text-wrap)
+  .todoseq-embedded-task-file-info {
+  flex: 0 4 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Wrap content mode - file info on new row without truncation */
 .todoseq-embedded-task-file-info-wrap {
   color: var(--text-muted);
@@ -1118,6 +1233,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
 /* File info inline on wide screens */
@@ -1142,6 +1259,51 @@
   /* Text row fills available space on narrow screens */
   .todoseq-embedded-task-item-wrap-dynamic .todoseq-embedded-task-text-row {
     width: 100%;
+  }
+
+  /* Switch dynamic mode to wrap-like layout on narrow screens */
+  .todoseq-embedded-task-item-wrap-dynamic
+    .todoseq-embedded-task-content-wrapper {
+    flex-direction: column;
+  }
+
+  .todoseq-embedded-task-item-wrap-dynamic
+    .todoseq-embedded-task-text-wrap-dynamic {
+    display: block;
+    overflow: visible;
+  }
+
+  .todoseq-embedded-task-item-wrap-dynamic
+    .todoseq-embedded-task-text-wrap-dynamic
+    .todoseq-embedded-task-state,
+  .todoseq-embedded-task-item-wrap-dynamic
+    .todoseq-embedded-task-text-wrap-dynamic
+    .todoseq-embedded-task-text {
+    display: inline;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+  }
+
+  .todoseq-embedded-task-item-wrap-dynamic
+    .todoseq-embedded-task-text-wrap-dynamic
+    .todoseq-task-description-text {
+    overflow: visible;
+    text-overflow: unset;
+    min-width: unset;
+  }
+
+  .todoseq-embedded-task-item-wrap-dynamic
+    .todoseq-embedded-task-text-wrap-dynamic
+    .todoseq-task-description {
+    display: block;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: 100%;
+    flex: none;
+    margin-left: 0;
   }
 
   /* Floating indicators align to right on narrow screens */

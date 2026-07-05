@@ -984,5 +984,71 @@ describe('VaultScanner.tasksIdentical', () => {
       const result = vaultScanner.tasksIdentical(tasks1, tasks2);
       expect(result).toBe(false);
     });
+
+    it('should return false when description changes from text to undefined', () => {
+      const tasks1 = [
+        {
+          path: 'test.md',
+          line: 0,
+          rawText: 'TODO test',
+          description: 'a description',
+          scheduledDate: null,
+          deadlineDate: null,
+          urgency: null,
+          isDailyNote: false,
+          dailyNoteDate: null,
+        },
+      ];
+      const tasks2 = [
+        {
+          path: 'test.md',
+          line: 0,
+          rawText: 'TODO test',
+          description: undefined,
+          scheduledDate: null,
+          deadlineDate: null,
+          urgency: null,
+          isDailyNote: false,
+          dailyNoteDate: null,
+        },
+      ];
+
+      // @ts-ignore - Accessing private method for testing
+      const result = vaultScanner.tasksIdentical(tasks1, tasks2);
+      expect(result).toBe(false);
+    });
+
+    it('should return true when both descriptions are undefined', () => {
+      const tasks1 = [
+        {
+          path: 'test.md',
+          line: 0,
+          rawText: 'TODO test',
+          description: undefined,
+          scheduledDate: null,
+          deadlineDate: null,
+          urgency: null,
+          isDailyNote: false,
+          dailyNoteDate: null,
+        },
+      ];
+      const tasks2 = [
+        {
+          path: 'test.md',
+          line: 0,
+          rawText: 'TODO test',
+          description: undefined,
+          scheduledDate: null,
+          deadlineDate: null,
+          urgency: null,
+          isDailyNote: false,
+          dailyNoteDate: null,
+        },
+      ];
+
+      // @ts-ignore - Accessing private method for testing
+      const result = vaultScanner.tasksIdentical(tasks1, tasks2);
+      expect(result).toBe(true);
+    });
   });
 });

@@ -39,6 +39,34 @@ export function getCheckboxStatus(completed: boolean): string {
 }
 
 /**
+ * Truncate a description string to a max length, appending ellipsis if needed.
+ */
+export function truncateDescription(text: string, max = 256): string {
+  return text.length > max ? text.substring(0, max) + '...' : text;
+}
+
+/**
+ * Build a description display element with icon and truncated text.
+ * Returns [container, iconElement] so caller can call setIcon on the icon.
+ * In span mode (no-wrap), CSS handles truncation via text-overflow: ellipsis.
+ * In div mode (wrap), JavaScript truncates at 256 characters.
+ */
+export function buildDescriptionDisplay(
+  parent: HTMLElement,
+  description: string,
+  tag: 'div' | 'span' = 'div',
+): [HTMLElement, HTMLElement] {
+  const descEl = parent.createEl(tag, { cls: 'todoseq-task-description' });
+  const iconEl = descEl.createSpan({ cls: 'todoseq-task-description-icon' });
+  const textEl = descEl.createSpan({ cls: 'todoseq-task-description-text' });
+  const stripped = stripDescriptionMarkdown(description);
+  // Only truncate in wrap mode (div); no-wrap mode uses CSS ellipsis
+  const displayText = tag === 'div' ? truncateDescription(stripped) : stripped;
+  textEl.setText(displayText);
+  return [descEl, iconEl];
+}
+
+/**
  * Truncate a string in the middle with ellipsis
  * @param str The string to truncate
  * @param maxLength Maximum length of the result string
@@ -114,6 +142,30 @@ export function stripMarkdownForDisplay(input: string): string {
   out = out.replace(/[ \t]+\n/g, '\n');
   out = out.replace(/\n{3,}/g, '\n\n');
   out = out.trim();
+
+  return out;
+}
+
+/**
+ * Strip markdown from description text for display in task lists.
+ * Includes link stripping (wiki links, markdown links, raw URLs)
+ * since descriptions are display-only and don't need clickable links.
+ */
+export function stripDescriptionMarkdown(input: string): string {
+  let out = stripMarkdownForDisplay(input);
+
+  // Wiki links: [[page|alias]] -> alias, [[page]] -> page
+  out = out.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2');
+  out = out.replace(/\[\[([^\]]+)\]\]/g, '$1');
+
+  // Markdown links: [text](url) -> text
+  out = out.replace(/\[([^[\]]*(?:\[[^[\]]*\][^[\]]*)*)\]\(([^)]+)\)/g, '$1');
+
+  // Raw URLs: https://... -> (removed)
+  out = out.replace(/\bhttps?:\/\/[^\s)]+/g, '');
+
+  // Normalize extra whitespace left by removals
+  out = out.replace(/\s{2,}/g, ' ').trim();
 
   return out;
 }

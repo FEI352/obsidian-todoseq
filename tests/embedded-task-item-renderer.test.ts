@@ -966,5 +966,113 @@ describe('EmbeddedTaskItemRenderer', () => {
         expect(anyTooltipHost).toBeFalsy();
       });
     });
+
+    describe('description display', () => {
+      it('shows description icon in hide mode', () => {
+        mockPluginKeywordSettings(renderer, {
+          taskDescriptionDisplay: 'hide',
+        });
+        const task = createBaseTask({
+          description: 'Pick up milk',
+        });
+        const li = renderer.createTaskListItem(task, 0, {});
+
+        const icon = li.querySelector('.todoseq-task-description-icon');
+        expect(icon).toBeTruthy();
+        const textEl = li.querySelector('.todoseq-task-description-text');
+        expect(textEl).toBeNull();
+      });
+
+      it('shows description text in show mode', () => {
+        mockPluginKeywordSettings(renderer, {
+          taskDescriptionDisplay: 'show',
+        });
+        const task = createBaseTask({
+          description: 'Pick up milk',
+        });
+        const li = renderer.createTaskListItem(task, 0, {});
+
+        const descEl = li.querySelector('.todoseq-task-description');
+        expect(descEl).toBeTruthy();
+        const textEl = li.querySelector('.todoseq-task-description-text');
+        expect(textEl?.textContent).toBe('Pick up milk');
+      });
+
+      it('truncates long description in show mode', () => {
+        mockPluginKeywordSettings(renderer, {
+          taskDescriptionDisplay: 'show',
+        });
+        const task = createBaseTask({
+          description: 'A'.repeat(300),
+        });
+        const li = renderer.createTaskListItem(task, 0, {});
+
+        const textEl = li.querySelector('.todoseq-task-description-text');
+        expect(textEl?.textContent).toHaveLength(259); // 256 + '...'
+        expect(textEl?.textContent).toContain('...');
+      });
+
+      it('does not show description when task has no description', () => {
+        mockPluginKeywordSettings(renderer, {
+          taskDescriptionDisplay: 'show',
+        });
+        const task = createBaseTask({ description: undefined });
+        const li = renderer.createTaskListItem(task, 0, {});
+
+        const descEl = li.querySelector('.todoseq-task-description');
+        expect(descEl).toBeNull();
+        const icon = li.querySelector('.todoseq-task-description-icon');
+        expect(icon).toBeNull();
+      });
+
+      it('shows description icon in wrap mode', () => {
+        mockPluginKeywordSettings(renderer, {
+          taskDescriptionDisplay: 'show',
+        });
+        const task = createBaseTask({
+          description: 'Pick up milk',
+        });
+        const li = renderer.createTaskListItem(task, 0, {
+          wrapContent: true,
+        });
+
+        const descEl = li.querySelector('.todoseq-task-description');
+        expect(descEl).toBeTruthy();
+        const textEl = li.querySelector('.todoseq-task-description-text');
+        expect(textEl?.textContent).toBe('Pick up milk');
+      });
+
+      it('shows description icon in no-wrap mode', () => {
+        mockPluginKeywordSettings(renderer, {
+          taskDescriptionDisplay: 'show',
+        });
+        const task = createBaseTask({
+          description: 'Pick up milk',
+        });
+        const li = renderer.createTaskListItem(task, 0, {
+          wrapContent: false,
+        });
+
+        const descEl = li.querySelector('.todoseq-task-description');
+        expect(descEl).toBeTruthy();
+        const textEl = li.querySelector('.todoseq-task-description-text');
+        expect(textEl?.textContent).toBe('Pick up milk');
+      });
+
+      it('respects code block show-description override', () => {
+        mockPluginKeywordSettings(renderer, {
+          taskDescriptionDisplay: 'hide',
+        });
+        const task = createBaseTask({
+          description: 'Pick up milk',
+        });
+        const li = renderer.createTaskListItem(task, 0, {
+          showDescription: 'show',
+        });
+
+        const descEl = li.querySelector('.todoseq-task-description');
+        expect(descEl).toBeTruthy();
+      });
+    });
   });
 });

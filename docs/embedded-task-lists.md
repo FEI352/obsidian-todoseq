@@ -38,6 +38,7 @@ Using the following parameters within the `todoseq` code block you define which 
 - `deadline-warning-period:` (optional) a non-negative number. Overrides the global "Deadline advance notice" setting for this code block. Tasks appear this many days before their deadline
 - `skip-scheduled-warning-if-deadline:` (optional) `true` or `false`. Overrides the global "Ignore Scheduled Delay When Deadline Is Set" setting for this code block
 - `skip-deadline-warning-if-scheduled:` (optional) `true` or `false`. Overrides the global "Ignore Deadline Advance Notice When Scheduled Is Set" setting for this code block
+- `show-description:` (optional) `show`, `hide`, `true`, or `false`. Controls how task descriptions are displayed. `show` displays the icon and description text, `hide` displays only the icon. `true` maps to `show`, `false` maps to `hide`. Defaults to `hide`
 
 Example:
 

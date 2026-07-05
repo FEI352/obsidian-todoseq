@@ -5,6 +5,8 @@ import {
   hasSubtasks,
   getTaskTextDisplay,
   truncateMiddle,
+  buildDescriptionDisplay,
+  stripDescriptionMarkdown,
 } from '../../utils/task-utils';
 import TodoTracker from '../../main';
 import { TodoseqParameters } from './code-block-parser';
@@ -121,7 +123,7 @@ export class EmbeddedTaskItemRenderer {
         cls: 'todoseq-embedded-task-text-container todoseq-embedded-task-text-wrap',
       });
 
-      this.buildItemContents(textContainer, task, li);
+      this.buildItemContents(textContainer, task, li, params);
 
       if (needsFloatingIndicators) {
         const floatingIndicators = textRow.createDiv({
@@ -192,7 +194,7 @@ export class EmbeddedTaskItemRenderer {
         cls: 'todoseq-embedded-task-text-container todoseq-embedded-task-text-wrap-dynamic',
       });
 
-      this.buildItemContents(textContainer, task, li);
+      this.buildItemContents(textContainer, task, li, params);
 
       if (needsFloatingIndicators) {
         const floatingIndicators = textRow.createDiv({
@@ -282,7 +284,7 @@ export class EmbeddedTaskItemRenderer {
       });
       tooltipHost = textContainer;
 
-      this.buildItemContents(textContainer, task, li);
+      this.buildItemContents(textContainer, task, li, params);
 
       if (params.showFile !== false) {
         const fileName = task.path.split('/').pop() || task.path;
@@ -357,6 +359,7 @@ export class EmbeddedTaskItemRenderer {
     textContainer: HTMLElement,
     task: Task,
     li: HTMLLIElement,
+    params?: TodoseqParameters,
   ): void {
     const stateSpan = textContainer.createSpan({
       cls: 'todoseq-embedded-task-state',
@@ -488,6 +491,37 @@ export class EmbeddedTaskItemRenderer {
         textSpan.appendText(' ');
       }
       this.renderTaskTextWithLinks(task, textSpan);
+    }
+
+    // Add description if enabled via code block parameter or global setting
+    const descMode =
+      params?.showDescription ??
+      this.plugin.keywordManager.getSettings().taskDescriptionDisplay ??
+      'hide';
+    if (task.description) {
+      const isWrapMode =
+        textContainer.classList.contains('todoseq-embedded-task-text-wrap') ||
+        textContainer.classList.contains(
+          'todoseq-embedded-task-text-wrap-dynamic',
+        );
+
+      if (descMode === 'hide') {
+        // Hide mode: icon only, inline on the task line
+        const iconEl = textContainer.createSpan({
+          cls: 'todoseq-task-description-icon',
+        });
+        setIcon(iconEl, 'text');
+        setTooltip(iconEl, stripDescriptionMarkdown(task.description));
+      } else {
+        // Show mode: use shared helper (wrap mode uses div, no-wrap uses span)
+        const tag = isWrapMode ? 'div' : 'span';
+        const [, iconEl] = buildDescriptionDisplay(
+          textContainer,
+          task.description,
+          tag,
+        );
+        setIcon(iconEl, 'text');
+      }
     }
   }
 

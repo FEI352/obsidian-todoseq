@@ -696,6 +696,68 @@ export class TaskListView extends ItemView {
       })();
     });
 
+    // Add "Task descriptions" dropdown
+    const descriptionsSetting = settingsSection.createEl('div', {
+      cls: 'setting-item',
+    });
+    const descriptionsSettingInfo = descriptionsSetting.createEl('div', {
+      cls: 'setting-item-info',
+    });
+    descriptionsSettingInfo.createEl('div', {
+      cls: 'setting-item-name',
+      text: 'Task descriptions:',
+    });
+
+    const descriptionsSettingControl = descriptionsSetting.createEl('div', {
+      cls: 'setting-item-control',
+    });
+    const descriptionsDropdown = descriptionsSettingControl.createEl('select', {
+      cls: 'mod-small',
+      attr: {
+        id: 'task-descriptions-dropdown',
+        'aria-label': 'Task description display',
+      },
+    });
+
+    // Add description display options
+    const descriptionOptions = [
+      { value: 'hide', label: 'Hide' },
+      { value: 'show', label: 'Show' },
+    ];
+
+    for (const option of descriptionOptions) {
+      descriptionsDropdown.createEl('option', {
+        attr: { value: option.value },
+        text: option.label,
+      });
+    }
+
+    // Set current description display mode
+    descriptionsDropdown.value = this.plugin.settings.taskDescriptionDisplay;
+
+    // Handle description display changes
+    descriptionsDropdown.addEventListener('change', () => {
+      void (async () => {
+        const selectedValue = descriptionsDropdown.value as 'hide' | 'show';
+
+        // Update settings and re-render
+        this.plugin.settings.taskDescriptionDisplay = selectedValue;
+        this.debouncedSaveSettings();
+
+        // Refresh vault scanner's keyword manager so renderer sees fresh settings
+        if (this.plugin.vaultScanner) {
+          await this.plugin.vaultScanner.updateSettings(this.plugin.settings);
+          // Sync main.ts keywordManager reference
+          this.plugin.keywordManager =
+            this.plugin.vaultScanner.getKeywordManager();
+        }
+        this.updateSettings();
+
+        // Re-render with new setting
+        await this.refreshVisibleList(false);
+      })();
+    });
+
     // Add search results info bar (second row)
     const searchResultsInfo = toolbar.createEl('div', {
       cls: 'search-results-info',

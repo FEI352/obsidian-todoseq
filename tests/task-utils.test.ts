@@ -6,6 +6,8 @@ import {
   isCompletedState,
   getCheckboxStatus,
   truncateMiddle,
+  truncateDescription,
+  stripDescriptionMarkdown,
   getTaskTextDisplay,
   stripMarkdownForDisplay,
   hasSubtasks,
@@ -575,6 +577,79 @@ describe('task-utils', () => {
     test('returns zero completed format', () => {
       const task = createTask({ subtaskCount: 4, subtaskCompletedCount: 0 });
       expect(getSubtaskDisplayText(task)).toBe('0/4');
+    });
+  });
+
+  describe('truncateDescription', () => {
+    test('returns short text unchanged', () => {
+      expect(truncateDescription('Short text')).toBe('Short text');
+    });
+
+    test('returns empty string unchanged', () => {
+      expect(truncateDescription('')).toBe('');
+    });
+
+    test('truncates text exceeding max length with ellipsis', () => {
+      const longText = 'A'.repeat(300);
+      const result = truncateDescription(longText);
+      expect(result).toHaveLength(259); // 256 + '...'
+      expect(result).toBe('A'.repeat(256) + '...');
+    });
+
+    test('respects custom max length', () => {
+      const text = 'Hello World';
+      expect(truncateDescription(text, 5)).toBe('Hello...');
+    });
+
+    test('returns exact max length unchanged', () => {
+      const text = 'A'.repeat(256);
+      expect(truncateDescription(text)).toBe(text);
+    });
+  });
+
+  describe('stripDescriptionMarkdown', () => {
+    test('strips bold markdown', () => {
+      expect(stripDescriptionMarkdown('text with **bold**')).toBe(
+        'text with bold',
+      );
+    });
+
+    test('strips wiki links with alias', () => {
+      expect(stripDescriptionMarkdown('See [[Page|Alias]] here')).toBe(
+        'See Alias here',
+      );
+    });
+
+    test('strips wiki links without alias', () => {
+      expect(stripDescriptionMarkdown('See [[Page Name]] here')).toBe(
+        'See Page Name here',
+      );
+    });
+
+    test('strips markdown links', () => {
+      expect(
+        stripDescriptionMarkdown('Check [Label](https://example.com) out'),
+      ).toBe('Check Label out');
+    });
+
+    test('strips raw URLs', () => {
+      expect(stripDescriptionMarkdown('Visit https://example.com now')).toBe(
+        'Visit now',
+      );
+    });
+
+    test('strips all link types together', () => {
+      const input = 'Has [[Wiki|w]], [MD](url), and https://bare.url';
+      const result = stripDescriptionMarkdown(input);
+      expect(result).toBe('Has w, MD, and');
+    });
+
+    test('handles empty input', () => {
+      expect(stripDescriptionMarkdown('')).toBe('');
+    });
+
+    test('handles text with no markdown', () => {
+      expect(stripDescriptionMarkdown('Plain text')).toBe('Plain text');
     });
   });
 });

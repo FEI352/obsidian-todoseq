@@ -71,6 +71,8 @@ export interface TodoTrackerSettings {
   defaultScheduledWarningPeriod: number; // default delayed notice for scheduled in days (0 = disabled)
   skipScheduledWarningPeriodIfDeadline: boolean; // ignore scheduled delay when task has deadline
   skipDeadlinePrewarningIfScheduled: boolean; // ignore deadline advance notice when task has scheduled date
+  // Description display settings
+  taskDescriptionDisplay: 'hide' | 'show'; // controls how task descriptions are displayed
 }
 
 export const DefaultStateTransitionSettings: StateTransitionSettings = {
@@ -138,6 +140,8 @@ export const DefaultSettings: TodoTrackerSettings = {
   defaultScheduledWarningPeriod: 0, // No delay by default
   skipScheduledWarningPeriodIfDeadline: false, // Don't skip scheduled delay when deadline exists (Org Mode default: nil)
   skipDeadlinePrewarningIfScheduled: false, // Don't skip deadline warning when scheduled exists (Org Mode default: nil)
+  // Description display settings
+  taskDescriptionDisplay: 'show', // Show descriptions by default
   // Saved searches - default presets
   savedSearches: DEFAULT_SAVED_SEARCHES,
 };

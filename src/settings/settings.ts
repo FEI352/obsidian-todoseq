@@ -88,11 +88,21 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
   }
 
   private refreshAllTaskListViews = async () => {
+    // Ensure the vault scanner's keyword manager has fresh settings
+    // (keyword manager is a snapshot; it must be recreated when settings change)
+    if (this.plugin.vaultScanner) {
+      await this.plugin.vaultScanner.updateSettings(this.plugin.settings);
+      // Sync main.ts keywordManager reference so embedded task lists see fresh settings
+      this.plugin.keywordManager = this.plugin.vaultScanner.getKeywordManager();
+    }
+
     const leaves = this.app.workspace.getLeavesOfType('todoseq-view');
     const tasks = this.plugin.getTasks();
     for (const leaf of leaves) {
       if (leaf.view instanceof TaskListView) {
         const taskListView = leaf.view;
+        // Update keyword manager with new settings before rendering
+        taskListView.updateSettings();
         taskListView.updateTasks(tasks);
         // Sync each view's mode from settings before render
         const mode = this.plugin.settings.taskListViewMode;
@@ -1120,6 +1130,24 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
               const mode = value as
                 'showAll' | 'showUpcoming' | 'sortToEnd' | 'hideFuture';
               this.plugin.settings.futureTaskSorting = mode;
+              await this.plugin.saveSettings();
+              await this.refreshAllTaskListViews();
+            });
+          });
+      })
+      .addSetting((setting) => {
+        setting
+          .setName('Task descriptions')
+          .setDesc(
+            'Controls how task descriptions (description: lines) are displayed in the task list.',
+          )
+          .addDropdown((drop) => {
+            drop.addOption('hide', 'Hide');
+            drop.addOption('show', 'Show');
+            drop.setValue(this.plugin.settings.taskDescriptionDisplay);
+            drop.onChange(async (value: string) => {
+              const mode = value as 'hide' | 'show';
+              this.plugin.settings.taskDescriptionDisplay = mode;
               await this.plugin.saveSettings();
               await this.refreshAllTaskListViews();
             });

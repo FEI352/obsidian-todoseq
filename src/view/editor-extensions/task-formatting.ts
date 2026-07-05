@@ -596,9 +596,10 @@ export class TaskKeywordDecorator {
       return;
     }
 
-    // Check if this line contains SCHEDULED:, DEADLINE:, or CLOSED:
+    // Check if this line contains SCHEDULED:, DEADLINE:, CLOSED:, or DESCRIPTION:
     const trimmedLine = lineText.trim();
     let dateLineType: 'scheduled' | 'deadline' | 'closed' | null = null;
+    let isDescriptionLine = false;
 
     // Handle callout blocks (lines starting with >)
     if (lineText.startsWith('>')) {
@@ -609,6 +610,8 @@ export class TaskKeywordDecorator {
         dateLineType = 'deadline';
       } else if (contentAfterArrow.startsWith('CLOSED:')) {
         dateLineType = 'closed';
+      } else if (contentAfterArrow.startsWith('DESCRIPTION:')) {
+        isDescriptionLine = true;
       }
     } else if (trimmedLine.startsWith('SCHEDULED:')) {
       dateLineType = 'scheduled';
@@ -616,6 +619,8 @@ export class TaskKeywordDecorator {
       dateLineType = 'deadline';
     } else if (trimmedLine.startsWith('CLOSED:')) {
       dateLineType = 'closed';
+    } else if (trimmedLine.startsWith('DESCRIPTION:')) {
+      isDescriptionLine = true;
     }
 
     // If this is a date line, check if it matches the indent level of the previous task
@@ -690,6 +695,53 @@ export class TaskKeywordDecorator {
 
         // Continue tracking for additional date lines (both SCHEDULED, DEADLINE, and CLOSED)
         // Don't reset tracking here, allow finding multiple date lines after a single task
+      }
+    } else if (isDescriptionLine) {
+      const lineIndent = lineText.substring(
+        0,
+        lineText.length - trimmedLine.length,
+      );
+
+      // Check if the indent matches or is deeper than the task indent
+      if (
+        lineIndent === this.previousTaskIndent ||
+        lineIndent.startsWith(this.previousTaskIndent)
+      ) {
+        // Apply full-line decoration for DESCRIPTION: line
+        const lineStartPos = line.from;
+        const lineEndPos = line.to;
+
+        builder.add(
+          lineStartPos,
+          lineEndPos,
+          Decoration.mark({
+            class: 'todoseq-task-description',
+            attributes: {
+              'data-description-line': 'true',
+              'aria-label': 'description line',
+              role: 'note',
+            },
+          }),
+        );
+
+        // Apply specific styling to the keyword itself
+        const keywordStart = trimmedLine.indexOf('DESCRIPTION:');
+        const keywordStartPos =
+          line.from + (lineText.length - trimmedLine.length) + keywordStart;
+        const keywordEndPos = keywordStartPos + 'DESCRIPTION:'.length;
+
+        builder.add(
+          keywordStartPos,
+          keywordEndPos,
+          Decoration.mark({
+            class: 'todoseq-description-keyword',
+            attributes: {
+              'data-description-keyword': 'DESCRIPTION:',
+              'aria-label': 'description keyword',
+              role: 'mark',
+            },
+          }),
+        );
       }
     } else if (linesSinceTask > 1 && !trimmedLine) {
       // Empty line, continue tracking for potential date lines

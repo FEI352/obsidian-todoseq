@@ -501,6 +501,19 @@ FIXME Handle edge cases
 
 **Default**: Show all
 
+### Task Descriptions
+
+**Setting**: "Task descriptions" dropdown
+
+**Description**: Controls how task descriptions (DESCRIPTION: lines) are displayed in the **Task List view only**. Editor, reader view, and embedded task lists always display DESCRIPTION: lines with styling regardless of this setting.
+
+Options:
+
+- **Show** Show the icon and description text as styled text below each task
+- **Hide**: Show only the icon with description text in a tooltip on hover
+
+**Default**: Show
+
 ### Upcoming Period
 
 **Setting**: "Upcoming period (days)" numeric input

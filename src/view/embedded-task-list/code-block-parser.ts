@@ -47,6 +47,7 @@ export interface TodoseqParameters {
   deadlineWarningPeriod?: number;
   skipScheduledWarningIfDeadline?: boolean;
   skipDeadlineWarningIfScheduled?: boolean;
+  showDescription?: 'hide' | 'show';
   error?: string;
 }
 
@@ -93,6 +94,7 @@ export class TodoseqCodeBlockParser {
       let deadlineWarningPeriod: number | undefined;
       let skipScheduledWarningIfDeadline: boolean | undefined;
       let skipDeadlineWarningIfScheduled: boolean | undefined;
+      let showDescription: 'hide' | 'show' | undefined;
 
       // Parse each line for parameters
       for (const line of lines) {
@@ -388,6 +390,23 @@ export class TodoseqCodeBlockParser {
               `Invalid skip-deadline-warning-if-scheduled option: ${value}. Valid options: true, false`,
             );
           }
+        } else if (trimmed.startsWith('show-description:')) {
+          const showDescValue = trimmed
+            .substring('show-description:'.length)
+            .trim()
+            .toLowerCase();
+          if (['true', 'false', 'show', 'hide'].includes(showDescValue)) {
+            // Map boolean-like values to the new enum
+            if (showDescValue === 'true' || showDescValue === 'show') {
+              showDescription = 'show';
+            } else {
+              showDescription = 'hide';
+            }
+          } else {
+            throw new Error(
+              `Invalid show-description option: ${showDescValue}. Valid options: true, false, show, hide`,
+            );
+          }
         }
       }
 
@@ -431,6 +450,7 @@ export class TodoseqCodeBlockParser {
         deadlineWarningPeriod,
         skipScheduledWarningIfDeadline,
         skipDeadlineWarningIfScheduled,
+        showDescription,
       };
     } catch (error) {
       const errorMessage =
@@ -453,6 +473,7 @@ export class TodoseqCodeBlockParser {
         deadlineWarningPeriod: undefined,
         skipScheduledWarningIfDeadline: undefined,
         skipDeadlineWarningIfScheduled: undefined,
+        showDescription: undefined,
       };
     }
   }

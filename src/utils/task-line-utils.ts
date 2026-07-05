@@ -46,7 +46,6 @@ export function findDateLine(
   taskIndent: string,
   keywordManager: KeywordManager,
 ): number {
-  // Search limited to 9 lines after task (max nesting depth)
   const maxLines = Math.min(startIndex + 9, lines.length);
   const keyword = `${dateType}:`;
 
@@ -54,53 +53,16 @@ export function findDateLine(
     const line = lines[i];
     const trimmedLine = line.trimStart();
 
-    // For quoted lines, check if trimmed line starts with > and rest starts with keyword
-    // Handle both single > and nested > > quotes
-    if (trimmedLine.startsWith('>')) {
-      // Remove quote prefix and check if keyword follows
-      const quotePrefix = trimmedLine.match(/^(>\s*)+/)?.[0] ?? '';
-      const contentAfterQuotes = trimmedLine
-        .substring(quotePrefix.length)
-        .trim();
-      if (contentAfterQuotes.startsWith(keyword)) {
-        // For quoted lines, ensure the quote level matches
-        // Any indent after the quote prefix is allowed
-        const lineQuotePrefix = quotePrefix;
-        // Extract quote prefix from task indent (including any leading whitespace before quotes)
-        const taskQuotePrefix = taskIndent.match(/(\s*(>\s*)+)/)?.[1] ?? '';
-        // Quote levels must match (or date line can be at deeper quote level)
-        if (
-          taskQuotePrefix !== '' &&
-          lineQuotePrefix.startsWith(taskQuotePrefix)
-        ) {
-          return i;
-        }
-      }
-    }
-
-    // For regular lines, check if trimmed line starts with keyword
-    // Any indent level is allowed - no indent check needed
-    // But only if the task is NOT quoted (quote levels must match)
-    const taskHasQuotes = taskIndent.match(/(>\s*)+/)?.[0] ?? '';
-    if (taskHasQuotes === '' && trimmedLine.startsWith(keyword)) {
+    if (lineStartsWithKeyword(line, keyword, taskIndent)) {
       return i;
     }
 
-    // Check if this is a task line (we should stop searching if we find one)
     if (isTaskLine(trimmedLine, keywordManager)) {
-      // Found another task - stop searching
       break;
     }
 
     // Stop if we hit a non-date, non-empty line at same or lower indent
-    // Check for both regular and quoted date lines
-    const isDateLine =
-      trimmedLine.startsWith('SCHEDULED:') ||
-      trimmedLine.startsWith('DEADLINE:') ||
-      trimmedLine.startsWith('CLOSED:') ||
-      /^(>\s*)+(SCHEDULED|DEADLINE|CLOSED):/.test(trimmedLine);
-
-    if (trimmedLine !== '' && !isDateLine) {
+    if (trimmedLine !== '' && !isDateKeywordLine(trimmedLine)) {
       const lineIndent = line.substring(0, line.length - trimmedLine.length);
       const effectiveLineIndent =
         line.match(/^(\s*(>\s*)+)/)?.[1] ?? lineIndent;
@@ -206,6 +168,98 @@ export function findDateLineWithParser(
 
   // Fall back to regex-based detection
   return findDateLine(lines, startIndex, dateType, taskIndent, keywordManager);
+}
+
+/**
+ * Find a DESCRIPTION: line after a task line.
+ * Uses the same search pattern as findDateLine.
+ *
+ * @param lines - Array of lines to search
+ * @param startIndex - Starting line index (typically task.line + 1)
+ * @param taskIndent - The task's indent level
+ * @returns Line index of found description line, or -1 if not found
+ */
+export function findDescriptionLine(
+  lines: string[],
+  startIndex: number,
+  taskIndent: string,
+): number {
+  return findKeywordLine(lines, startIndex, 'DESCRIPTION:', taskIndent);
+}
+
+/**
+ * Find a keyword line after a task line, handling quoted lines.
+ */
+function findKeywordLine(
+  lines: string[],
+  startIndex: number,
+  keyword: string,
+  taskIndent: string,
+): number {
+  const maxLines = Math.min(startIndex + 9, lines.length);
+
+  for (let i = startIndex; i < maxLines; i++) {
+    const line = lines[i];
+    const trimmedLine = line.trimStart();
+
+    if (lineStartsWithKeyword(line, keyword, taskIndent)) {
+      return i;
+    }
+
+    // Stop at non-empty, non-date/keyword lines
+    if (trimmedLine !== '' && !isDateKeywordLine(trimmedLine)) {
+      break;
+    }
+  }
+
+  return -1;
+}
+
+/**
+ * Check if a line is a date keyword line (SCHEDULED:, DEADLINE:, CLOSED:, DESCRIPTION:).
+ * Handles both bare and quoted (>, > >) forms.
+ */
+function isDateKeywordLine(line: string): boolean {
+  const trimmed = line.trimStart();
+  // Fast path: bare keywords (most common in vault-scan hot path)
+  if (
+    trimmed.startsWith('SCHEDULED:') ||
+    trimmed.startsWith('DEADLINE:') ||
+    trimmed.startsWith('CLOSED:') ||
+    trimmed.startsWith('DESCRIPTION:')
+  ) {
+    return true;
+  }
+  // Slow path: quoted keywords (only test regex for lines starting with >)
+  return (
+    trimmed.startsWith('>') &&
+    /^(>\s*)+(SCHEDULED|DEADLINE|CLOSED|DESCRIPTION):/.test(trimmed)
+  );
+}
+
+/**
+ * Shared quote-aware keyword matcher. Returns true if `line` starts with
+ * `keyword` after stripping quote prefixes, respecting `taskIndent` quote level.
+ */
+function lineStartsWithKeyword(
+  line: string,
+  keyword: string,
+  taskIndent: string,
+): boolean {
+  const trimmedLine = line.trimStart();
+
+  if (trimmedLine.startsWith('>')) {
+    const quotePrefix = trimmedLine.match(/^(>\s*)+/)?.[0] ?? '';
+    const contentAfterQuotes = trimmedLine.substring(quotePrefix.length).trim();
+    if (contentAfterQuotes.startsWith(keyword)) {
+      const taskQuotePrefix = taskIndent.match(/(\s*(>\s*)+)/)?.[1] ?? '';
+      return taskQuotePrefix !== '' && quotePrefix.startsWith(taskQuotePrefix);
+    }
+    return false;
+  }
+
+  const taskHasQuotes = taskIndent.match(/(>\s*)+/)?.[0] ?? '';
+  return taskHasQuotes === '' && trimmedLine.startsWith(keyword);
 }
 
 /**

@@ -539,6 +539,7 @@ export class VaultScanner
         b.path !== a.path ||
         b.line !== a.line ||
         b.rawText !== a.rawText ||
+        b.description !== a.description ||
         (b.scheduledDate?.getTime() ?? null) !==
           (a.scheduledDate?.getTime() ?? null) ||
         (b.deadlineDate?.getTime() ?? null) !==

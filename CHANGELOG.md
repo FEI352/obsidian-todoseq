@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.17.0
+
+- Adds Task descriptions via new `DESCRIPTION:` keyword. #73
+  - Add short context notes to tasks that display in Task List and Embedded Lists
+  - New `Add description` command in command palette
+  - Code block option `show-description` for embedded lists
+
 ## 0.16.4
 
 - Fixed show 'No tasks found' instead of 'Loading...' when vault has no tasks after scan.

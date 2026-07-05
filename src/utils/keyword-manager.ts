@@ -18,6 +18,7 @@ export type KeywordSettings = {
   defaultDeadlineWarningPeriod?: number;
   skipScheduledWarningPeriodIfDeadline?: boolean;
   skipDeadlinePrewarningIfScheduled?: boolean;
+  taskDescriptionDisplay?: 'hide' | 'show';
 };
 
 const BUILTIN_COMPLETED_SET = new Set<string>(BUILTIN_COMPLETED_KEYWORDS);

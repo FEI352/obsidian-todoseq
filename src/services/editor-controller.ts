@@ -17,6 +17,7 @@ import {
 } from '../utils/daily-note-utils';
 import {
   findDateLine,
+  findDescriptionLine,
   getTaskIndent,
   getDateLineIndent,
 } from '../utils/task-line-utils';
@@ -462,6 +463,85 @@ export class EditorController {
       view,
       'DEADLINE',
     );
+  }
+
+  /**
+   * Handle adding a description to the task at the current cursor position
+   * @param checking - Whether this is just a check to see if the command is available
+   * @param editor - The editor instance
+   * @param view - The markdown view
+   * @returns boolean indicating if the command is available
+   */
+  handleAddDescriptionAtCursor(
+    checking: boolean,
+    editor: Editor,
+    view: MarkdownView,
+  ): boolean {
+    const cursor = editor.getCursor();
+    return this.handleAddDescriptionAtLine(checking, cursor.line, editor, view);
+  }
+
+  /**
+   * Handle adding a description to the task at the specified line
+   * @param checking - Whether this is just a check to see if the command is available
+   * @param lineNumber - The line number to check
+   * @param editor - The editor instance
+   * @param view - The markdown view
+   * @returns boolean indicating if the operation was successful
+   */
+  handleAddDescriptionAtLine(
+    checking: boolean,
+    lineNumber: number,
+    editor: Editor,
+    view: MarkdownView,
+  ): boolean {
+    const vaultScanner = this.plugin.getVaultScanner();
+    if (!vaultScanner) return false;
+
+    const line = editor.getLine(lineNumber);
+    const parser = vaultScanner.getParser();
+    if (!parser?.testRegex.test(line)) return false;
+
+    if (checking) return true;
+
+    // Parse task to get indent
+    const task = parser.parseLineAsTask(line, lineNumber, '');
+    const taskIndent = task
+      ? getTaskIndent(task)
+      : (line.match(/^(\s*)/)?.[1] ?? '');
+
+    // Build lines array to search for existing DESCRIPTION: (stop early if possible)
+    const totalLines = Math.min(lineNumber + 10, editor.lineCount());
+    const lines: string[] = [];
+    for (let i = 0; i < totalLines; i++) {
+      lines.push(editor.getLine(i));
+    }
+
+    const existingIdx = findDescriptionLine(lines, lineNumber + 1, taskIndent);
+
+    if (existingIdx >= 0) {
+      // DESCRIPTION: already exists — move cursor to end of description text
+      const descLine = editor.getLine(existingIdx);
+      const descContent = descLine.replace(/^[\s>]*DESCRIPTION:\s*/, '');
+      const descEnd = descLine.indexOf(descContent) + descContent.length;
+      editor.setCursor({ line: existingIdx, ch: descEnd });
+      return true;
+    }
+
+    // Insert new DESCRIPTION: line after the task line
+    const insertLine = lineNumber + 1;
+    const descLine = `${taskIndent}DESCRIPTION: `;
+    const lineBeforeInsert = editor.getLine(insertLine - 1);
+    const newlineBefore = lineBeforeInsert.endsWith('\n') ? '' : '\n';
+    editor.replaceRange(
+      newlineBefore + descLine,
+      { line: insertLine - 1, ch: editor.getLine(insertLine - 1).length },
+      { line: insertLine - 1, ch: editor.getLine(insertLine - 1).length },
+    );
+
+    // Position cursor after "DESCRIPTION: " for immediate typing
+    editor.setCursor({ line: insertLine, ch: descLine.length });
+    return true;
   }
 
   /**

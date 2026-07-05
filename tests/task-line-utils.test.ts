@@ -6,6 +6,7 @@ import {
   getTaskIndent,
   findDateLine,
   findDateLineWithParser,
+  findDescriptionLine,
   getIndentLength,
 } from '../src/utils/task-line-utils';
 import { Task } from '../src/types/task';
@@ -586,6 +587,107 @@ describe('task-line-utils', () => {
       const lines = ['  TODO task', '\t SCHEDULED: <2026-03-10>'];
       const result = findDateLine(lines, 1, 'SCHEDULED', '  ', keywordManager);
       expect(result).toBe(1);
+    });
+  });
+
+  describe('findDescriptionLine', () => {
+    it('should find DESCRIPTION: line after task', () => {
+      const lines = ['- [ ] TODO task', 'DESCRIPTION: Pick up milk'];
+      expect(findDescriptionLine(lines, 1, '')).toBe(1);
+    });
+
+    it('should find DESCRIPTION: with indent', () => {
+      const lines = ['  - [ ] TODO task', '  DESCRIPTION: Pick up milk'];
+      expect(findDescriptionLine(lines, 1, '  ')).toBe(1);
+    });
+
+    it('should find DESCRIPTION: after SCHEDULED:', () => {
+      const lines = [
+        '- [ ] TODO task',
+        'SCHEDULED: <2026-07-10>',
+        'DESCRIPTION: Important items',
+      ];
+      expect(findDescriptionLine(lines, 1, '')).toBe(2);
+    });
+
+    it('should find DESCRIPTION: between date lines', () => {
+      const lines = [
+        '- [ ] TODO task',
+        'SCHEDULED: <2026-07-10>',
+        'DESCRIPTION: Notes',
+        'DEADLINE: <2026-07-12>',
+      ];
+      expect(findDescriptionLine(lines, 1, '')).toBe(2);
+    });
+
+    it('should handle quoted DESCRIPTION:', () => {
+      const lines = ['> - [ ] TODO task', '> DESCRIPTION: Quoted desc'];
+      expect(findDescriptionLine(lines, 1, '> ')).toBe(1);
+    });
+
+    it('should handle nested quoted DESCRIPTION:', () => {
+      const lines = ['> > - [ ] TODO task', '> > DESCRIPTION: Nested desc'];
+      expect(findDescriptionLine(lines, 1, '> > ')).toBe(1);
+    });
+
+    it('should return -1 when no DESCRIPTION: exists', () => {
+      const lines = ['- [ ] TODO task', 'SCHEDULED: <2026-07-10>'];
+      expect(findDescriptionLine(lines, 1, '')).toBe(-1);
+    });
+
+    it('should return -1 at wrong quote level', () => {
+      const lines = ['> - [ ] TODO task', 'DESCRIPTION: Unquoted desc'];
+      expect(findDescriptionLine(lines, 1, '> ')).toBe(-1);
+    });
+
+    it('should stop at non-date, non-keyword line', () => {
+      const lines = [
+        '- [ ] TODO task',
+        'Some other content',
+        'DESCRIPTION: Too far',
+      ];
+      expect(findDescriptionLine(lines, 1, '')).toBe(-1);
+    });
+
+    it('should stop at next task line', () => {
+      const lines = [
+        '- [ ] TODO task1',
+        '- [ ] TODO task2',
+        'DESCRIPTION: Belongs to task2',
+      ];
+      expect(findDescriptionLine(lines, 1, '')).toBe(-1);
+    });
+
+    it('should search only 9 lines', () => {
+      const lines = [
+        '- [ ] TODO task',
+        ...Array(10).fill(''),
+        'DESCRIPTION: Too far',
+      ];
+      expect(findDescriptionLine(lines, 1, '')).toBe(-1);
+    });
+
+    it('should continue past empty lines', () => {
+      const lines = ['- [ ] TODO task', '', '', 'DESCRIPTION: After blanks'];
+      expect(findDescriptionLine(lines, 1, '')).toBe(3);
+    });
+
+    it('should continue past quoted date lines', () => {
+      const lines = [
+        '- [ ] TODO task',
+        '> SCHEDULED: <2026-07-10>',
+        'DESCRIPTION: After quoted date',
+      ];
+      expect(findDescriptionLine(lines, 1, '')).toBe(2);
+    });
+
+    it('should stop at quoted task line', () => {
+      const lines = [
+        '- [ ] TODO task',
+        '> - [ ] TODO other task',
+        'DESCRIPTION: After other task',
+      ];
+      expect(findDescriptionLine(lines, 1, '')).toBe(-1);
     });
   });
 });

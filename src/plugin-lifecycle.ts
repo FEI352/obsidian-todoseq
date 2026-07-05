@@ -269,6 +269,24 @@ export class PluginLifecycleManager {
       },
     });
 
+    // Add editor command to add description
+    this.plugin.addCommand({
+      id: 'add-description',
+      name: 'Add description',
+      icon: 'text',
+      editorCheckCallback: (
+        checking: boolean,
+        editor: Editor,
+        view: MarkdownView,
+      ) => {
+        return this.plugin.editorController.handleAddDescriptionAtCursor(
+          checking,
+          editor,
+          view,
+        );
+      },
+    });
+
     // Add editor command to set high priority
     this.plugin.addCommand({
       id: 'set-priority-high',
