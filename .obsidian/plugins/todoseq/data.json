@@ -45,6 +45,7 @@
   "defaultScheduledWarningPeriod": 0,
   "skipScheduledWarningPeriodIfDeadline": false,
   "skipDeadlinePrewarningIfScheduled": false,
+  "taskDescriptionDisplay": "show",
   "savedSearches": [
     {
       "id": "default-today",
