@@ -1083,7 +1083,7 @@ export class DatePicker extends BaseDialog {
     const cancelBtn = buttonRow.createEl('button', {
       cls: 'todoseq-date-picker-custom-repeat-cancel',
     });
-    cancelBtn.setText('Cancel');
+    cancelBtn.setText(t('common.cancel'));
     cancelBtn.addEventListener('click', (evt) => {
       evt.preventDefault();
       evt.stopPropagation();
@@ -1093,7 +1093,7 @@ export class DatePicker extends BaseDialog {
     const saveBtn = buttonRow.createEl('button', {
       cls: 'todoseq-date-picker-custom-repeat-save',
     });
-    saveBtn.setText('Save');
+    saveBtn.setText(t('common.save'));
     saveBtn.addEventListener('click', (evt) => {
       evt.preventDefault();
       evt.stopPropagation();
@@ -1360,7 +1360,7 @@ export class DatePicker extends BaseDialog {
     const cancelBtn = buttonRow.createEl('button', {
       cls: 'todoseq-date-picker-custom-repeat-cancel',
     });
-    cancelBtn.setText('Cancel');
+    cancelBtn.setText(t('common.cancel'));
     cancelBtn.addEventListener('click', (evt) => {
       evt.preventDefault();
       evt.stopPropagation();
@@ -1370,7 +1370,7 @@ export class DatePicker extends BaseDialog {
     const saveBtn = buttonRow.createEl('button', {
       cls: 'todoseq-date-picker-custom-repeat-save',
     });
-    saveBtn.setText('Save');
+    saveBtn.setText(t('common.save'));
     saveBtn.addEventListener('click', (evt) => {
       evt.preventDefault();
       evt.stopPropagation();

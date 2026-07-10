@@ -1,3 +1,4 @@
+import { t } from '../i18n/base';
 /**
  * TimeLineRecorder — records task state changes to a JSONL timeline file.
  * 

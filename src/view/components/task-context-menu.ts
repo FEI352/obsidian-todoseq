@@ -336,7 +336,7 @@ export class TaskContextMenu extends BaseDialog {
     const header = this.containerEl.createEl('div', {
       cls: 'menu-item menu-item-title todoseq-context-menu-header',
     });
-    header.setText('Scheduled');
+    header.setText(t('common.scheduled'));
 
     // Icon row
     const iconRow = this.containerEl.createEl('div', {
@@ -440,7 +440,7 @@ export class TaskContextMenu extends BaseDialog {
     const header = this.containerEl.createEl('div', {
       cls: 'menu-item menu-item-title todoseq-context-menu-header',
     });
-    header.setText('Priority');
+    header.setText(t('common.priority'));
 
     // Icon row
     const iconRow = this.containerEl.createEl('div', {

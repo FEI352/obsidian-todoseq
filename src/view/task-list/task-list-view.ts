@@ -433,7 +433,7 @@ export class TaskListView extends ItemView {
     // Right-aligned search input with icon
     const searchId = `todoseq-search-${Math.random().toString(36).slice(2, 8)}`;
     const searchLabel = firstRow.createEl('label', { attr: { for: searchId } });
-    searchLabel.setText('Search');
+    searchLabel.setText(t('common.search'));
     searchLabel.addClass('sr-only');
     const searchInputWrap = firstRow.createEl('div', {
       cls: 'search-input-container global-search-input-container',
