@@ -130,7 +130,7 @@ export const DefaultSettings: TodoTrackerSettings = {
   migrateToTodayState: '', // Default state to set on source task after migrating (empty = disabled)
   stateTransitions: DefaultStateTransitionSettings,
   trackClosedDate: false, // Disabled by default
-  useExtendedCheckboxStyles: false, // Experimental feature - disabled by default
+  useExtendedCheckboxStyles: true, // Hermes fork: enable [/] and [-] by default
   // Smart date recognition settings
   enableSmartDateRecognition: true, // Enabled by default
   smartDateRemoveKeywords: true, // Remove natural language text after conversion
