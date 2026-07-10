@@ -1,3 +1,4 @@
+import { t } from '../i18n/base';
 import {
   PluginSettingTab,
   App,
@@ -111,7 +112,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
         taskListView.updateContextMenuConfig();
         // Use lighter refresh instead of full onOpen rebuild
         taskListView.refreshVisibleList().catch((error) => {
-          new Notice('Failed to refresh task list');
+          new Notice(t('notice.refresh-failed'));
           console.error('Error refreshing task list:', error);
         });
       }
@@ -215,7 +216,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       )
       .addSetting((setting) => {
         setting
-          .setName('Migrated state keyword')
+          .setName(t('settings.general.migrated-state'))
           .setDesc(
             'Keyword or text to set on the source task after migrating to daily note. Leave empty to disable.',
           )
@@ -552,7 +553,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .addSetting((setting) => {
         this.transitionSettings.transitions = setting;
         setting
-          .setName('State transitions')
+          .setName(t('settings.general.state-transitions'))
           .setDesc(
             'Define how states transition. Each line: STATE -> next_state. Use (a | b) to define multiple initial states.',
           )
@@ -600,7 +601,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .addSetting((setting) => {
         this.transitionSettings.inactive = setting;
         setting
-          .setName('Default inactive state')
+          .setName(t('settings.general.default-inactive'))
           .setDesc(
             'The default state for inactive tasks when no explicit transition is defined.',
           )
@@ -628,7 +629,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .addSetting((setting) => {
         this.transitionSettings.active = setting;
         setting
-          .setName('Default active state')
+          .setName(t('settings.general.default-active'))
           .setDesc(
             'The default state for active tasks when no explicit transition is defined.',
           )
@@ -656,7 +657,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .addSetting((setting) => {
         this.transitionSettings.completed = setting;
         setting
-          .setName('Default completed state')
+          .setName(t('settings.general.default-completed'))
           .setDesc(
             'The default state for completed tasks when no explicit transition is defined.',
           )
@@ -683,8 +684,8 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Track closed date')
-          .setDesc('Add closed: timestamp when tasks are marked as completed.')
+          .setName(t('settings.general.track-closed'))
+          .setDesc(t('settings.general.track-closed-desc'))
           .addToggle((toggle) =>
             toggle
               .setValue(this.plugin.settings.trackClosedDate)
@@ -967,7 +968,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .setHeading('Task detection')
       .addSetting((setting) => {
         setting
-          .setName('Include tasks inside quote and callout blocks')
+          .setName(t('settings.scan.include-callout'))
           .setDesc(
             'When enabled, include tasks inside quote and callout blocks (>, >[!info], >[!todo], etc.).',
           )
@@ -990,8 +991,8 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Include tasks inside comments')
-          .setDesc('When enabled, include tasks inside comments (%%).')
+          .setName(t('settings.scan.include-comments'))
+          .setDesc(t('settings.scan.include-comments-desc'))
           .addToggle((toggle) =>
             toggle
               .setValue(this.plugin.settings.includeCommentBlocks)
@@ -1011,7 +1012,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Include tasks inside code blocks')
+          .setName(t('settings.scan.include-code'))
           .setDesc(
             'When enabled, tasks inside fenced code blocks (``` or ~~~) will be included.',
           )
@@ -1048,7 +1049,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .addSetting((setting) => {
         languageSetting = setting;
         setting
-          .setName('Enable language comment support')
+          .setName(t('settings.scan.lang-comment'))
           .setDesc(
             'When enabled, tasks inside code blocks will be detected using language-specific comment patterns e.g. `// TODO`',
           )
@@ -1082,8 +1083,8 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .setHeading('Task list search and filter')
       .addSetting((setting) => {
         setting
-          .setName('Week starts on')
-          .setDesc('Choose which day the week starts on for date filtering.')
+          .setName(t('settings.general.week-start'))
+          .setDesc(t('settings.general.week-start-desc'))
           .addDropdown((drop) => {
             drop.addOption('Monday', 'Monday');
             drop.addOption('Sunday', 'Sunday');
@@ -1098,8 +1099,8 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Completed tasks')
-          .setDesc('Choose how completed items are shown in the task list.')
+          .setName(t('settings.general.completed-tasks'))
+          .setDesc(t('settings.general.completed-tasks-desc'))
           .addDropdown((drop) => {
             drop.addOption('showAll', 'Show all tasks');
             drop.addOption('sortCompletedLast', 'Sort completed to end');
@@ -1116,7 +1117,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Future dated tasks')
+          .setName(t('settings.general.future-tasks'))
           .setDesc(
             'Choose how tasks with future dates are displayed in the task list.',
           )
@@ -1137,7 +1138,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Task descriptions')
+          .setName(t('settings.display.task-descriptions'))
           .setDesc(
             'Controls how task descriptions (description: lines) are displayed in the task list.',
           )
@@ -1155,7 +1156,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Upcoming period (days)')
+          .setName(t('settings.display.upcoming-period'))
           .setDesc(
             'Tasks within this many days are shown as "upcoming" when using the show upcoming option.',
           )
@@ -1178,7 +1179,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Default sort method')
+          .setName(t('settings.display.default-sort'))
           .setDesc('Choose the default sort method for the task list.')
           .addDropdown((drop) => {
             drop.addOption('default', 'Default (file path)');
@@ -1216,7 +1217,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .setHeading('Smart date recognition')
       .addSetting((setting) => {
         setting
-          .setName('Enable smart date recognition')
+          .setName(t('settings.display.smart-date'))
           .setDesc(
             'Automatically convert natural language dates like "today", "tomorrow", "due next week".',
           )
@@ -1249,7 +1250,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .addSetting((setting) => {
         removeKeywordsSetting = setting;
         setting
-          .setName('Remove date keywords')
+          .setName(t('settings.display.remove-date-keywords'))
           .setDesc(
             'Remove natural language text (e.g., "today", "tomorrow") after conversion to structured dates.',
           )
@@ -1276,7 +1277,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .setHeading('Warning period')
       .addSetting((setting) => {
         setting
-          .setName('Deadline advance notice (days)')
+          .setName(t('settings.display.deadline-notice'))
           .setDesc(
             'Tasks appear this many days before their deadline. Set to 0 to disable.',
           )
@@ -1301,7 +1302,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Scheduled delay (days)')
+          .setName(t('settings.display.scheduled-delay'))
           .setDesc(
             'Tasks appear this many days after their scheduled date. Set to 0 to disable.',
           )
@@ -1326,7 +1327,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Ignore scheduled delay when deadline is set')
+          .setName(t('settings.display.ignore-delay'))
           .setDesc(
             'If a task has both a scheduled date and a deadline, the scheduled delay is ignored.',
           )
@@ -1345,7 +1346,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Ignore deadline advance notice when scheduled is set')
+          .setName(t('settings.display.ignore-notice'))
           .setDesc(
             'If a task has both a scheduled date and a deadline, the deadline advance notice is ignored.',
           )
@@ -1370,7 +1371,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
 
     // Format task keywords in editor
     new Setting(containerEl)
-      .setName('Format task keywords')
+      .setName(t('settings.display.format-keywords'))
       .setDesc(
         'Highlight task keywords (todo, doing, etc.) in bold with accent color in the editor.',
       )
@@ -1414,7 +1415,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Detect org-mode files')
+          .setName(t('settings.scan.detect-org'))
           .setDesc(
             'When enabled, scans for .org files in vault and detects tasks using org-mode syntax.',
           )
@@ -1464,7 +1465,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Scan code files for comments')
+          .setName(t('settings.scan.code-comments'))
           .setDesc(
             'When enabled, scans code files (.js, .ts, .py, .rb, .java, .rs, .go, .c, .cpp, .cs, .swift, .kt, .sh, .YAML, .yml, .toml, .SQL, .ini, .r, .dockerfile, .ps1) for todo-style comments and detects them as tasks. Supports multi-line comments and skips keywords inside string literals.',
           )
@@ -1526,7 +1527,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       })
       .addSetting((setting) => {
         setting
-          .setName('Use extended Markdown checkbox styles')
+          .setName(t('settings.display.extended-checkbox'))
           .setDesc(
             'When enabled, uses themed checkbox styles ([/], [-]) for active and cancelled tasks.',
           )
