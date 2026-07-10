@@ -1,3 +1,4 @@
+import { t } from './i18n/base';
 import { Plugin, MarkdownView, Platform, Notice } from 'obsidian';
 import { EditorView } from '@codemirror/view';
 import { Task } from './types/task';
@@ -125,7 +126,7 @@ export default class TodoTracker extends Plugin {
         leaf.view.updateTasks(tasks);
         // Lighter refresh: only update the visible list rather than full onOpen re-init
         leaf.view.refreshVisibleList().catch((error) => {
-          new Notice('Failed to refresh task list');
+          new Notice(t('error.refresh-list'));
           console.error('Error refreshing task list:', error);
         });
       }

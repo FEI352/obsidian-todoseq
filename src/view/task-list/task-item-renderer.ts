@@ -1,3 +1,4 @@
+import { t } from '../../i18n/base';
 import { Task } from '../../types/task';
 import { DateUtils, getEffectiveWarningDays } from '../../utils/date-utils';
 import { formatRepeatDescription } from '../../utils/date-repeater';
@@ -215,7 +216,7 @@ export class TaskItemRenderer {
         evt.preventDefault();
         evt.stopPropagation();
         activate(evt).catch((error) => {
-          new Notice('Failed to activate task');
+          new Notice(t('error.activate-task'));
           console.error('Error activating task:', error);
         });
       }

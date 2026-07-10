@@ -1,3 +1,4 @@
+import { t } from '../../i18n/base';
 import {
   SavedSearch,
   TodoTrackerSettings,
@@ -76,7 +77,7 @@ export class SavedSearchDialog {
       attr: {
         type: 'text',
         // eslint-disable-next-line obsidianmd/ui/sentence-case -- placeholder examples
-        placeholder: 'e.g., agenda, overdue, work active',
+        placeholder: t('search.example-simple'),
         maxlength: '50',
       },
     });
@@ -91,7 +92,7 @@ export class SavedSearchDialog {
       attr: {
         type: 'text',
         // eslint-disable-next-line obsidianmd/ui/sentence-case -- placeholder examples
-        placeholder: 'e.g., scheduled:today, state:active, tag:work',
+        placeholder: t('search.example-advanced'),
       },
     });
     queryInput.value =

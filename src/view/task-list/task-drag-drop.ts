@@ -1,3 +1,4 @@
+import { t } from '../../i18n/base';
 import {
   App,
   Notice,
@@ -256,7 +257,7 @@ export class TaskDragDropHandler {
     if (!targetFile) return;
 
     if (task.path === targetFile.path) {
-      new Notice('Task is already in this file');
+      new Notice(t('warn.already-in-file'));
       return;
     }
 
@@ -443,7 +444,7 @@ export class TaskDragDropHandler {
       }
     } catch (error) {
       console.error('[TODOseq] Failed to modify source task:', error);
-      new Notice('Failed to update source task');
+      new Notice(t('error.update-source'));
     }
   }
 }

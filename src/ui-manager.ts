@@ -1,3 +1,4 @@
+import { t } from './i18n/base';
 import { MarkdownView, WorkspaceLeaf, TFile, Notice } from 'obsidian';
 import { EditorView } from '@codemirror/view';
 import TodoTracker from './main';
@@ -83,7 +84,7 @@ export class UIManager {
                   target as HTMLInputElement,
                   event,
                 ).catch((error) => {
-                  new Notice('Failed to update task');
+                  new Notice(t('error.update-task'));
                   console.error('Error updating task:', error);
                 });
               }
@@ -334,7 +335,7 @@ export class UIManager {
           this.plugin.taskUpdateCoordinator
             .updateTaskByPath(filePath, lineNumber, newKeyword, 'editor')
             .catch((error) => {
-              new Notice('Failed to update task');
+              new Notice(t('error.update-task'));
               console.error('Error updating task:', error);
             });
         } else if (this.plugin.taskEditor) {
@@ -480,7 +481,7 @@ export class UIManager {
       if (!clickCancelled) {
         this.handleTaskKeywordClick(keywordElement, view, event).catch(
           (error) => {
-            new Notice('Failed to update task');
+            new Notice(t('error.update-task'));
             console.error('Error updating task:', error);
           },
         );
@@ -721,7 +722,7 @@ export class UIManager {
       leaf
         .setViewState({ type: TaskListView.viewType, active: false })
         .catch((error) => {
-          new Notice('Failed to set view state');
+          new Notice(t('error.set-view'));
           console.error('Error setting view state:', error);
         });
       // Only reveal if the leaf is not already active to avoid focus stealing
@@ -739,7 +740,7 @@ export class UIManager {
       leaf
         .setViewState({ type: TaskListView.viewType, active: false })
         .catch((error) => {
-          new Notice('Failed to set view state');
+          new Notice(t('error.set-view'));
           console.error('Error setting view state:', error);
         });
     }
@@ -819,7 +820,7 @@ export class UIManager {
     leaf
       .setViewState({ type: TaskListView.viewType, active: true })
       .catch((error) => {
-        new Notice('Failed to set view state');
+        new Notice(t('error.set-view'));
         console.error('Error setting view state:', error);
       });
   }
@@ -864,7 +865,7 @@ export class UIManager {
         leaf.view.updateTasks(tasks);
         // Full refresh of visible list
         leaf.view.refreshVisibleList().catch((error) => {
-          new Notice('Failed to refresh task list');
+          new Notice(t('error.refresh-list'));
           console.error('Error refreshing task list:', error);
         });
       }

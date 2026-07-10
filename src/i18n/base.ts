@@ -8,13 +8,24 @@ import { moment } from 'obsidian';
 
 type Lang = 'zh' | 'en';
 
+let forcedLang: Lang | null = null;
+
+export function setLang(lang: Lang): void {
+    forcedLang = lang;
+}
+
+export function getLang(): Lang {
+    if (forcedLang) return forcedLang;
+    const locale = moment.locale().toLowerCase();
+    if (locale === 'zh-cn' || locale === 'zh-tw' || locale === 'zh') return 'zh';
+    return 'en';
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const cache: Record<string, any> = {};
 
 export function detectLang(): Lang {
-    const locale = moment.locale().toLowerCase();
-    if (locale === 'zh-cn' || locale === 'zh-tw' || locale === 'zh') return 'zh';
-    return 'en';
+    return getLang();
 }
 
 /**
@@ -78,6 +89,8 @@ function loadZh(): Record<string, string> {
         'settings.display.title': '显示设置',
         'settings.display.extended-checkbox': '使用扩展复选框样式',
         'settings.display.extended-checkbox-desc': '启用后进行中显示 - [/]，已取消显示 - [-]（需要主题支持）。',
+        'settings.display.language': '界面语言',
+        'settings.display.language-desc': '切换插件界面语言。切换后刷新设置页面生效。',
 
         // ── Notices ──
         'notice.refresh-failed': '刷新任务列表失败',
@@ -123,5 +136,83 @@ function loadZh(): Record<string, string> {
         'task.duration': '耗时',
         'task.subtasks': '子任务',
         'task.tags': '标签',
-    };
+    
+        // ── Task list filters ──
+        'filter.active': '进行中',
+        'filter.archived': '已归档',
+        'filter.completed': '已完成',
+        'filter.inactive': '未激活',
+        'filter.overdue': '已逾期',
+        'filter.today': '今天',
+        'filter.waiting': '等待中',
+
+        // ── Commands ──
+        'cmd.add-description': '添加描述',
+        'cmd.copy-today': '复制任务到今日',
+        'cmd.migrate-today': '迁移任务到今日',
+        'cmd.move-today': '移动任务到今日',
+        'cmd.open-context-menu': '打开右键菜单',
+        'cmd.open-deadline-picker': '打开截止日期选择器',
+        'cmd.open-scheduled-picker': '打开计划日期选择器',
+        'cmd.open-in-new-tab': '在新标签页中打开',
+        'cmd.search-tasks': '搜索任务…',
+        'cmd.show-task-list': '显示任务列表',
+
+        // ── Sort ──
+        'sort.default-desc': '选择任务列表的默认排序方式。',
+
+        // ── Errors ──
+        'error.activate-task': '激活任务失败',
+        'error.copy-task': '复制任务失败',
+        'error.copy-today': '复制任务到今日失败',
+        'error.source-file': '找不到源文件',
+        'error.today-note': '无法获取或创建今日日记',
+        'error.load-more': '加载更多任务失败',
+        'error.migrate-today': '迁移任务到今日失败',
+        'error.move-today': '移动任务到今日失败',
+        'error.open-list': '打开任务列表失败',
+        'error.open-location': '打开任务位置失败',
+        'error.refresh-list': '刷新任务列表失败',
+        'error.set-view': '设置视图状态失败',
+        'error.context-menu': '显示右键菜单失败',
+        'error.date-picker': '显示日期选择器失败',
+        'error.update-source': '更新源任务失败',
+        'error.update-task': '更新任务失败',
+        'error.update-date': '更新任务日期失败',
+        'error.update-deadline': '更新任务截止日期失败',
+        'error.update-priority': '更新任务优先级失败',
+
+        // ── Success messages ──
+        'success.copied': '任务已复制到剪贴板',
+        'success.copied-today': '任务已复制到今日日记',
+        'success.migrated-today': '任务已迁移到今日日记',
+        'success.moved-today': '任务已移动到今日日记',
+
+        // ── Warnings ──
+        'warn.already-in-file': '任务已在此文件中',
+        'warn.already-on-today': '任务已在今日日记中',
+
+        // ── Search ──
+        'search.example-simple': '例如：agenda, overdue, work active',
+        'search.example-advanced': '例如：scheduled:today, state:active, tag:work',
+
+        // ── Programming languages ──
+        'lang.cpp': 'C++',
+        'lang.csharp': 'C#',
+        'lang.dockerfile': 'Dockerfile',
+        'lang.ini': 'INI',
+        'lang.java': 'Java',
+        'lang.javascript': 'JavaScript',
+        'lang.kotlin': 'Kotlin',
+        'lang.powershell': 'PowerShell',
+        'lang.python': 'Python',
+        'lang.ruby': 'Ruby',
+        'lang.rust': 'Rust',
+        'lang.shell': 'Shell',
+        'lang.sql': 'SQL',
+        'lang.swift': 'Swift',
+        'lang.toml': 'TOML',
+        'lang.typescript': 'TypeScript',
+        'lang.yaml': 'YAML',
+};
 }

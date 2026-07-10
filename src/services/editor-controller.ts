@@ -1,3 +1,4 @@
+import { t } from '../i18n/base';
 import { Editor, EditorPosition, MarkdownView, Notice } from 'obsidian';
 import { EditorView } from '@codemirror/view';
 import { Task, WarningPeriodInfo } from '../types/task';
@@ -239,7 +240,7 @@ export class EditorController {
         taskUpdateCoordinator
           .updateTaskByPath(filePath, lineNumber, targetState, 'editor')
           .catch((error) => {
-            new Notice('Failed to update task');
+            new Notice(t('error.update-task'));
             console.error('Error updating task:', error);
           });
       } else {
@@ -687,7 +688,7 @@ export class EditorController {
       } else {
         // Fallback to TaskEditor if coordinator not available
         taskEditor.updateTaskPriority(task, priority).catch((error) => {
-          new Notice('Failed to update task priority');
+          new Notice(t('error.update-priority'));
           console.error('Error updating task priority:', error);
         });
       }
@@ -989,13 +990,13 @@ export class EditorController {
         // Get today's daily note
         const todayNote = await getTodayDailyNote(this.plugin.app);
         if (!todayNote) {
-          new Notice('Failed to get or create today daily note');
+          new Notice(t('error.today-note'));
           return;
         }
 
         // Check if task is already on today's daily note
         if (isTaskOnTodayDailyNote(task, todayNote)) {
-          new Notice('Task is already on today daily note');
+          new Notice(t('warn.already-on-today'));
           return;
         }
 
@@ -1016,10 +1017,10 @@ export class EditorController {
         await this.plugin.app.vault.modify(todayNote, newContent);
 
         // Show notification
-        new Notice('Task copied to today daily note');
+        new Notice(t('success.copied-today'));
       } catch (error) {
         console.error('[TODOseq] Failed to copy task to today:', error);
-        new Notice('Failed to copy task to today');
+        new Notice(t('error.copy-today'));
       }
     })();
 
@@ -1078,10 +1079,10 @@ export class EditorController {
     const textToCopy = allLines.join('\n');
     navigator.clipboard.writeText(textToCopy).then(
       () => {
-        new Notice('Task copied to clipboard');
+        new Notice(t('success.copied'));
       },
       () => {
-        new Notice('Failed to copy task');
+        new Notice(t('error.copy-task'));
       },
     );
 
@@ -1144,13 +1145,13 @@ export class EditorController {
         // Get today's daily note
         const todayNote = await getTodayDailyNote(this.plugin.app);
         if (!todayNote) {
-          new Notice('Failed to get or create today daily note');
+          new Notice(t('error.today-note'));
           return;
         }
 
         // Check if task is already on today's daily note
         if (isTaskOnTodayDailyNote(task, todayNote)) {
-          new Notice('Task is already on today daily note');
+          new Notice(t('warn.already-on-today'));
           return;
         }
 
@@ -1172,10 +1173,10 @@ export class EditorController {
         }
 
         // Show notification
-        new Notice('Task moved to today daily note');
+        new Notice(t('success.moved-today'));
       } catch (error) {
         console.error('[TODOseq] Failed to move task to today:', error);
-        new Notice('Failed to move task to today');
+        new Notice(t('error.move-today'));
       }
     })();
 
@@ -1249,13 +1250,13 @@ export class EditorController {
         // Get today's daily note
         const todayNote = await getTodayDailyNote(this.plugin.app);
         if (!todayNote) {
-          new Notice('Failed to get or create today daily note');
+          new Notice(t('error.today-note'));
           return;
         }
 
         // Check if task is already on today's daily note
         if (isTaskOnTodayDailyNote(task, todayNote)) {
-          new Notice('Task is already on today daily note');
+          new Notice(t('warn.already-on-today'));
           return;
         }
 
@@ -1290,10 +1291,10 @@ export class EditorController {
         }
 
         // Show notification
-        new Notice('Task migrated to today daily note');
+        new Notice(t('success.migrated-today'));
       } catch (error) {
         console.error('[TODOseq] Failed to migrate task to today:', error);
-        new Notice('Failed to migrate task to today');
+        new Notice(t('error.migrate-today'));
       }
     })();
 
@@ -1393,7 +1394,7 @@ export class EditorController {
                 newPriority: priority,
               })
               .catch((error) => {
-                new Notice('Failed to update task priority');
+                new Notice(t('error.update-priority'));
                 console.error('Error updating task priority:', error);
               });
           }
@@ -1416,7 +1417,7 @@ export class EditorController {
                 newWarningPeriod: warningPeriod,
               })
               .catch((error) => {
-                new Notice('Failed to update task date');
+                new Notice(t('error.update-date'));
                 console.error('Error updating task date:', error);
               });
           }
@@ -1439,7 +1440,7 @@ export class EditorController {
                 newWarningPeriod: warningPeriod,
               })
               .catch((error) => {
-                new Notice('Failed to update task deadline');
+                new Notice(t('error.update-deadline'));
                 console.error('Error updating task deadline:', error);
               });
           }
@@ -1457,7 +1458,7 @@ export class EditorController {
     contextMenu
       .show(task, { x: coords.left, y: coords.top + 20 })
       .catch((error) => {
-        new Notice('Failed to show context menu');
+        new Notice(t('error.context-menu'));
         console.error('Error showing context menu:', error);
       });
 
@@ -1593,7 +1594,7 @@ export class EditorController {
                 newRepeat: repeat,
               })
               .catch((error) => {
-                new Notice('Failed to update task date');
+                new Notice(t('error.update-date'));
                 console.error('Error updating task date:', error);
               });
           }
@@ -1613,7 +1614,7 @@ export class EditorController {
         initialRepeat,
       )
       .catch((error) => {
-        new Notice('Failed to show date picker');
+        new Notice(t('error.date-picker'));
         console.error('Error showing date picker:', error);
       });
 

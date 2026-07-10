@@ -1,3 +1,4 @@
+import { t } from '../../i18n/base';
 import { Task } from '../../types/task';
 import { getEffectiveWarningDays } from '../../utils/date-utils';
 import {
@@ -683,7 +684,7 @@ export class EmbeddedTaskItemRenderer {
           this.taskContextMenu
             .showAtMouseEvent(task, syntheticEvt)
             .catch((error) => {
-              new Notice('Failed to show context menu');
+              new Notice(t('error.context-menu'));
               console.error('Error showing context menu:', error);
             });
         }, LONG_PRESS_MS);

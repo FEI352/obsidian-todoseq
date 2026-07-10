@@ -1,3 +1,4 @@
+import { t } from '../../i18n/base';
 import { Menu } from 'obsidian';
 import TodoTracker from '../../main';
 import { KeywordManager } from '../../utils/keyword-manager';
@@ -68,23 +69,23 @@ export class StateMenuBuilder {
   private getKeywordGroups(): KeywordGroupDefinition[] {
     return [
       {
-        name: 'Active',
+        name: t('filter.active'),
         states: this.keywordManager.getKeywordsForGroup('activeKeywords'),
       },
       {
-        name: 'Inactive',
+        name: t('filter.inactive'),
         states: this.keywordManager.getKeywordsForGroup('inactiveKeywords'),
       },
       {
-        name: 'Waiting',
+        name: t('filter.waiting'),
         states: this.keywordManager.getKeywordsForGroup('waitingKeywords'),
       },
       {
-        name: 'Completed',
+        name: t('filter.completed'),
         states: this.keywordManager.getKeywordsForGroup('completedKeywords'),
       },
       {
-        name: 'Archived',
+        name: t('filter.archived'),
         states: this.keywordManager.getKeywordsForGroup('archivedKeywords'),
       },
     ];

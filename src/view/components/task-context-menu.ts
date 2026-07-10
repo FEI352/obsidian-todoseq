@@ -1,3 +1,4 @@
+import { t } from '../../i18n/base';
 import { setIcon, App, Notice, setTooltip } from 'obsidian';
 import { Task, WarningPeriodInfo } from '../../types/task';
 import { DateRepeatInfo } from '../../types/task';
@@ -560,7 +561,7 @@ export class TaskContextMenu extends BaseDialog {
     return [
       {
         icon: 'sun',
-        label: 'Today',
+        label: t('filter.today'),
         getDate: () => DateUtils.getDateOnly(new Date()),
       },
       {
@@ -673,7 +674,7 @@ export class TaskContextMenu extends BaseDialog {
     this.datePicker
       .show(position, mode, initialDate, initialRepeat, initialWarningPeriod)
       .catch((error) => {
-        new Notice('Failed to show date picker');
+        new Notice(t('error.date-picker'));
         console.error('Error showing date picker:', error);
       });
   }

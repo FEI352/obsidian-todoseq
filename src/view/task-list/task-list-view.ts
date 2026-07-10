@@ -1,3 +1,4 @@
+import { t } from '../../i18n/base';
 import {
   ItemView,
   WorkspaceLeaf,
@@ -441,7 +442,7 @@ export class TaskListView extends ItemView {
       attr: {
         id: searchId,
         type: 'search',
-        placeholder: 'Search tasks…',
+        placeholder: t('cmd.search-tasks'),
         'aria-label': 'Search tasks',
       },
     });
@@ -630,7 +631,7 @@ export class TaskListView extends ItemView {
 
       // Refresh the visible list - preserve scroll position
       this.refreshVisibleList(false).catch((error) => {
-        new Notice('Failed to refresh task list');
+        new Notice(t('error.refresh-list'));
         console.error('Error refreshing task list:', error);
       });
     });
@@ -1527,7 +1528,7 @@ export class TaskListView extends ItemView {
       view: window,
     });
     this.openTaskLocation(syntheticEvent, task).catch((error) => {
-      new Notice('Failed to open task location');
+      new Notice(t('error.open-location'));
       console.error('Error opening task location:', error);
     });
   }
@@ -1541,10 +1542,10 @@ export class TaskListView extends ItemView {
     const textToCopy = allLines.join('\n');
     navigator.clipboard.writeText(textToCopy).then(
       () => {
-        new Notice('Task copied to clipboard');
+        new Notice(t('success.copied'));
       },
       () => {
-        new Notice('Failed to copy task');
+        new Notice(t('error.copy-task'));
       },
     );
   }
@@ -1556,12 +1557,12 @@ export class TaskListView extends ItemView {
   private async copyTaskToToday(task: Task): Promise<void> {
     const todayNote = await getTodayDailyNote(this.plugin.app);
     if (!todayNote) {
-      new Notice('Failed to get or create today daily note');
+      new Notice(t('error.today-note'));
       return;
     }
 
     if (isTaskOnTodayDailyNote(task, todayNote)) {
-      new Notice('Task is already on today daily note');
+      new Notice(t('warn.already-on-today'));
       return;
     }
 
@@ -1571,7 +1572,7 @@ export class TaskListView extends ItemView {
       currentContent.trimEnd() + '\n\n' + allLines.join('\n') + '\n';
     await this.plugin.app.vault.modify(todayNote, newContent);
 
-    new Notice('Task copied to today daily note');
+    new Notice(t('success.copied-today'));
   }
 
   /**
@@ -1581,12 +1582,12 @@ export class TaskListView extends ItemView {
   private async moveTaskToToday(task: Task): Promise<void> {
     const todayNote = await getTodayDailyNote(this.plugin.app);
     if (!todayNote) {
-      new Notice('Failed to get or create today daily note');
+      new Notice(t('error.today-note'));
       return;
     }
 
     if (isTaskOnTodayDailyNote(task, todayNote)) {
-      new Notice('Task is already on today daily note');
+      new Notice(t('warn.already-on-today'));
       return;
     }
 
@@ -1599,7 +1600,7 @@ export class TaskListView extends ItemView {
 
     const sourceFile = this.plugin.app.vault.getAbstractFileByPath(task.path);
     if (!(sourceFile instanceof TFile)) {
-      new Notice('Failed to find source file');
+      new Notice(t('error.source-file'));
       return;
     }
 
@@ -1613,7 +1614,7 @@ export class TaskListView extends ItemView {
     ];
     await this.plugin.app.vault.modify(sourceFile, newSourceLines.join('\n'));
 
-    new Notice('Task moved to today daily note');
+    new Notice(t('success.moved-today'));
   }
 
   /**
@@ -1625,12 +1626,12 @@ export class TaskListView extends ItemView {
   private async migrateTaskToToday(task: Task): Promise<void> {
     const todayNote = await getTodayDailyNote(this.plugin.app);
     if (!todayNote) {
-      new Notice('Failed to get or create today daily note');
+      new Notice(t('error.today-note'));
       return;
     }
 
     if (isTaskOnTodayDailyNote(task, todayNote)) {
-      new Notice('Task is already on today daily note');
+      new Notice(t('warn.already-on-today'));
       return;
     }
 
@@ -1643,7 +1644,7 @@ export class TaskListView extends ItemView {
 
     const sourceFile = this.plugin.app.vault.getAbstractFileByPath(task.path);
     if (!(sourceFile instanceof TFile)) {
-      new Notice('Failed to find source file');
+      new Notice(t('error.source-file'));
       return;
     }
 
@@ -1659,7 +1660,7 @@ export class TaskListView extends ItemView {
     );
     await this.plugin.app.vault.modify(sourceFile, modified.join('\n'));
 
-    new Notice('Task migrated to today daily note');
+    new Notice(t('success.migrated-today'));
   }
 
   /**
@@ -1718,7 +1719,7 @@ export class TaskListView extends ItemView {
       if (isNearBottom && !this.isLoadingMore && !this.isAllTasksLoaded) {
         window.requestAnimationFrame(() => {
           void this.loadMoreTasks().catch((error) => {
-            new Notice('Failed to load more tasks');
+            new Notice(t('error.load-more'));
             console.error('Error loading more tasks:', error);
           });
         });
@@ -2633,7 +2634,7 @@ export class TaskListView extends ItemView {
 
     // Refresh visible list to ensure all elements are using the updated settings
     void this.refreshVisibleList().catch((error) => {
-      new Notice('Failed to refresh task list');
+      new Notice(t('error.refresh-list'));
       console.error('Error refreshing task list:', error);
     });
 
@@ -2781,7 +2782,7 @@ export class TaskListView extends ItemView {
         // Panel went from hidden to visible - refresh the list
         if (isNowVisible && !this.wasPanelVisible) {
           void this.refreshVisibleList().catch((error) => {
-            new Notice('Failed to refresh task list');
+            new Notice(t('error.refresh-list'));
             console.error('Error refreshing task list:', error);
           });
         }

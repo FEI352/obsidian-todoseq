@@ -1,3 +1,4 @@
+import { t } from '../../i18n/base';
 import TodoTracker from '../../main';
 import { Task } from '../../types/task';
 import { TaskListView } from '../task-list/task-list-view';
@@ -83,7 +84,7 @@ export class StatusBarManager {
 
     // Open/focus TODOseq Task List
     this.plugin.uiManager.showTasks().catch((error) => {
-      new Notice('Failed to open task list');
+      new Notice(t('error.open-list'));
       console.error('Error opening task list:', error);
     });
 
@@ -122,7 +123,7 @@ export class StatusBarManager {
     }
     // Trigger a refresh to apply the new search query
     view.refreshVisibleList().catch((error) => {
-      new Notice('Failed to refresh task list');
+      new Notice(t('error.refresh-list'));
       console.error('Error refreshing task list:', error);
     });
   }

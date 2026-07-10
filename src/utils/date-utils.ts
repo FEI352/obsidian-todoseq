@@ -1,3 +1,4 @@
+import { t } from '../i18n/base';
 import { WarningPeriodInfo } from '../types/task';
 
 /**
@@ -45,7 +46,7 @@ export class DateUtils {
     if (diffDays === 0) {
       return includeTime && (date.getHours() !== 0 || date.getMinutes() !== 0)
         ? `Today ${formatTime(date)}`
-        : 'Today';
+        : t('filter.today');
     } else if (diffDays === 1) {
       return includeTime && (date.getHours() !== 0 || date.getMinutes() !== 0)
         ? `Tomorrow ${formatTime(date)}`

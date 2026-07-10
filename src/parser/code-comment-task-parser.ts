@@ -1,3 +1,4 @@
+import { t } from '../i18n/base';
 import { Task } from '../types/task';
 import { ITaskParser, ParserConfig } from './types';
 import { LanguageRegistry, LanguageDefinition } from './language-registry';
@@ -10,41 +11,41 @@ interface BlockState {
 }
 
 const EXTENSION_TO_LANGUAGE: Record<string, string> = {
-  '.js': 'javascript',
-  '.jsx': 'javascript',
-  '.mjs': 'javascript',
-  '.cjs': 'javascript',
-  '.ts': 'typescript',
-  '.tsx': 'typescript',
-  '.mts': 'typescript',
-  '.py': 'python',
-  '.rb': 'ruby',
-  '.java': 'java',
-  '.rs': 'rust',
+  '.js': t('lang.javascript'),
+  '.jsx': t('lang.javascript'),
+  '.mjs': t('lang.javascript'),
+  '.cjs': t('lang.javascript'),
+  '.ts': t('lang.typescript'),
+  '.tsx': t('lang.typescript'),
+  '.mts': t('lang.typescript'),
+  '.py': t('lang.python'),
+  '.rb': t('lang.ruby'),
+  '.java': t('lang.java'),
+  '.rs': t('lang.rust'),
   '.go': 'go',
   '.c': 'c',
   '.h': 'c',
-  '.cpp': 'cpp',
-  '.hpp': 'cpp',
-  '.cc': 'cpp',
-  '.cxx': 'cpp',
-  '.cs': 'csharp',
-  '.swift': 'swift',
-  '.kt': 'kotlin',
-  '.kts': 'kotlin',
-  '.sh': 'shell',
-  '.bash': 'shell',
-  '.zsh': 'shell',
-  '.yaml': 'yaml',
-  '.yml': 'yaml',
-  '.toml': 'toml',
-  '.sql': 'sql',
-  '.ini': 'ini',
+  '.cpp': t('lang.cpp'),
+  '.hpp': t('lang.cpp'),
+  '.cc': t('lang.cpp'),
+  '.cxx': t('lang.cpp'),
+  '.cs': t('lang.csharp'),
+  '.swift': t('lang.swift'),
+  '.kt': t('lang.kotlin'),
+  '.kts': t('lang.kotlin'),
+  '.sh': t('lang.shell'),
+  '.bash': t('lang.shell'),
+  '.zsh': t('lang.shell'),
+  '.yaml': t('lang.yaml'),
+  '.yml': t('lang.yaml'),
+  '.toml': t('lang.toml'),
+  '.sql': t('lang.sql'),
+  '.ini': t('lang.ini'),
   '.r': 'r',
-  '.dockerfile': 'dockerfile',
-  '.ps1': 'powershell',
-  '.psm1': 'powershell',
-  '.psd1': 'powershell',
+  '.dockerfile': t('lang.dockerfile'),
+  '.ps1': t('lang.powershell'),
+  '.psm1': t('lang.powershell'),
+  '.psd1': t('lang.powershell'),
 };
 
 export const SUPPORTED_EXTENSIONS = Object.keys(EXTENSION_TO_LANGUAGE);
@@ -59,11 +60,11 @@ const STRING_PATTERNS: Record<string, RegExp> = {
   sql: /'[^']*(?:''[^']*)*'/g,
 };
 
-const JSTS = new Set(['javascript', 'typescript']);
-const PY = new Set(['python']);
-const SH = new Set(['shell', 'dockerfile']);
-const RB = new Set(['ruby']);
-const SQ = new Set(['sql']);
+const JSTS = new Set([t('lang.javascript'), t('lang.typescript')]);
+const PY = new Set([t('lang.python')]);
+const SH = new Set([t('lang.shell'), t('lang.dockerfile')]);
+const RB = new Set([t('lang.ruby')]);
+const SQ = new Set([t('lang.sql')]);
 
 function getStringPattern(languageName: string): RegExp | null {
   if (JSTS.has(languageName)) return STRING_PATTERNS.jsts;
@@ -97,13 +98,13 @@ const BLOCK_COMMENT_FAMILY: Record<string, string | null> = {
   swift: 'c-style',
   kotlin: 'c-style',
   sql: 'c-style',
-  python: 'python',
-  ruby: 'ruby',
-  powershell: 'powershell',
+  python: t('lang.python'),
+  ruby: t('lang.ruby'),
+  powershell: t('lang.powershell'),
 };
 
 const BLOCK_STRING_FAMILY: Record<string, string | null> = {
-  python: 'python',
+  python: t('lang.python'),
 };
 
 const BLOCK_COMMENT_STARTS: Record<string, RegExp> = {

@@ -1,3 +1,4 @@
+import { t } from '../../i18n/base';
 import { setIcon } from 'obsidian';
 import { DateUtils } from '../../utils/date-utils';
 import { formatRepeatDescription } from '../../utils/date-repeater';
@@ -547,7 +548,7 @@ export class DatePicker extends BaseDialog {
     return [
       {
         icon: 'sun',
-        label: 'Today',
+        label: t('filter.today'),
         getDate: () => DateUtils.getDateOnly(new Date()),
       },
       {

@@ -1,3 +1,4 @@
+import { t } from '../i18n/base';
 // Type definitions for language-specific comment support
 
 export interface LanguageCommentPatterns {
@@ -50,15 +51,15 @@ const C_LANGUAGE: LanguageDefinition = {
 
 // C++ language definition
 const CPP_LANGUAGE: LanguageDefinition = {
-  name: 'cpp',
-  keywords: ['cpp', 'c++'],
+  name: t('lang.cpp'),
+  keywords: [t('lang.cpp'), 'c++'],
   patterns: C_STYLE_COMMENTS,
 };
 
 // C# language definition
 const CSHARP_LANGUAGE: LanguageDefinition = {
-  name: 'csharp',
-  keywords: ['csharp', 'cs'],
+  name: t('lang.csharp'),
+  keywords: [t('lang.csharp'), 'cs'],
   patterns: {
     ...C_STYLE_COMMENTS,
     singleLine: /\/\/\/?/, // starts with // or ///
@@ -67,8 +68,8 @@ const CSHARP_LANGUAGE: LanguageDefinition = {
 
 // Dockerfile language definition
 const DOCKERFILE_LANGUAGE: LanguageDefinition = {
-  name: 'dockerfile',
-  keywords: ['dockerfile'],
+  name: t('lang.dockerfile'),
+  keywords: [t('lang.dockerfile')],
   patterns: HASH_STYLE_COMMENTS,
 };
 
@@ -80,8 +81,8 @@ const GOLANG_LANGUAGE: LanguageDefinition = {
 
 // INI language definition
 const INI_LANGUAGE: LanguageDefinition = {
-  name: 'ini',
-  keywords: ['ini'],
+  name: t('lang.ini'),
+  keywords: [t('lang.ini')],
   patterns: {
     singleLine: /[;#]/, // starts with ; or #
     multiLineStart: undefined,
@@ -92,28 +93,28 @@ const INI_LANGUAGE: LanguageDefinition = {
 
 // Java language definition
 const JAVA_LANGUAGE: LanguageDefinition = {
-  name: 'java',
+  name: t('lang.java'),
   patterns: C_STYLE_COMMENTS,
 };
 
 // JavaScript language definition
 const JAVASCRIPT_LANGUAGE: LanguageDefinition = {
-  name: 'javascript',
-  keywords: ['javascript', 'js'],
+  name: t('lang.javascript'),
+  keywords: [t('lang.javascript'), 'js'],
   patterns: C_STYLE_COMMENTS,
 };
 
 // Kotlin language definition
 const KOTLIN_LANGUAGE: LanguageDefinition = {
-  name: 'kotlin',
-  keywords: ['kotlin'],
+  name: t('lang.kotlin'),
+  keywords: [t('lang.kotlin')],
   patterns: C_STYLE_COMMENTS,
 };
 
 // PowerShell language definition
 const POWERSHELL_LANGUAGE: LanguageDefinition = {
-  name: 'powershell',
-  keywords: ['powershell'],
+  name: t('lang.powershell'),
+  keywords: [t('lang.powershell')],
   patterns: {
     singleLine: /#/, // starts with #
     multiLineStart: /<#/, // starts with <#
@@ -123,8 +124,8 @@ const POWERSHELL_LANGUAGE: LanguageDefinition = {
 
 // Python language definition
 const PYTHON_LANGUAGE: LanguageDefinition = {
-  name: 'python',
-  keywords: ['python', 'py'],
+  name: t('lang.python'),
+  keywords: [t('lang.python'), 'py'],
   patterns: {
     singleLine: /#/, // starts with #
     multiLineStart: /'''|"""/, // starts with ''' or """
@@ -141,7 +142,7 @@ const R_LANGUAGE: LanguageDefinition = {
 
 // Ruby language definition
 const RUBY_LANGUAGE: LanguageDefinition = {
-  name: 'ruby',
+  name: t('lang.ruby'),
   patterns: {
     singleLine: /#/, // starts with #
     multiLineStart: /=begin/, // starts with =begin
@@ -151,8 +152,8 @@ const RUBY_LANGUAGE: LanguageDefinition = {
 
 // Rust language definition
 const RUST_LANGUAGE: LanguageDefinition = {
-  name: 'rust',
-  keywords: ['rust'],
+  name: t('lang.rust'),
+  keywords: [t('lang.rust')],
   patterns: {
     singleLine: /\/\/[/!]?/, // starts with //, /// or //!
     multiLineStart: /\/\*\*?/, // starts with /* or /**
@@ -162,14 +163,14 @@ const RUST_LANGUAGE: LanguageDefinition = {
 
 // Shell language definition (Bash/Zsh/Fish)
 const SHELL_LANGUAGE: LanguageDefinition = {
-  name: 'shell',
-  keywords: ['shell', 'sh', 'bash'],
+  name: t('lang.shell'),
+  keywords: [t('lang.shell'), 'sh', 'bash'],
   patterns: HASH_STYLE_COMMENTS,
 };
 
 // SQL language definition
 const SQL_LANGUAGE: LanguageDefinition = {
-  name: 'sql',
+  name: t('lang.sql'),
   patterns: {
     singleLine: /--/, // starts with --
     multiLineStart: /\/\*+/, // starts with /* or /**
@@ -179,8 +180,8 @@ const SQL_LANGUAGE: LanguageDefinition = {
 
 // Swift language definition
 const SWIFT_LANGUAGE: LanguageDefinition = {
-  name: 'swift',
-  keywords: ['swift'],
+  name: t('lang.swift'),
+  keywords: [t('lang.swift')],
   patterns: {
     ...C_STYLE_COMMENTS,
     singleLine: /^\s*\/\/\/?\s+/, // starts with //, ///
@@ -189,22 +190,22 @@ const SWIFT_LANGUAGE: LanguageDefinition = {
 
 // TOML language definition
 const TOML_LANGUAGE: LanguageDefinition = {
-  name: 'toml',
-  keywords: ['toml'],
+  name: t('lang.toml'),
+  keywords: [t('lang.toml')],
   patterns: HASH_STYLE_COMMENTS,
 };
 
 // TypeScript language definition
 const TYPESCRIPT_LANGUAGE: LanguageDefinition = {
-  name: 'typescript',
-  keywords: ['typescript', 'ts'],
+  name: t('lang.typescript'),
+  keywords: [t('lang.typescript'), 'ts'],
   patterns: C_STYLE_COMMENTS,
 };
 
 // YAML language definition
 const YAML_LANGUAGE: LanguageDefinition = {
-  name: 'yaml',
-  keywords: ['yaml', 'yml'],
+  name: t('lang.yaml'),
+  keywords: [t('lang.yaml'), 'yml'],
   patterns: HASH_STYLE_COMMENTS,
 };
 

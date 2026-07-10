@@ -1,3 +1,4 @@
+import { t } from '../i18n/base';
 export interface SavedSearch {
   id: string; // unique identifier
   name: string; // user-given label, max 50 chars
@@ -62,6 +63,7 @@ export interface TodoTrackerSettings {
   trackClosedDate: boolean; // when true, adds CLOSED: timestamp when tasks are marked as completed
   // Experimental features
   useExtendedCheckboxStyles: boolean; // when true, uses themed markdown checkbox styles ([/], [-]) for active and cancelled tasks
+  language: 'zh' | 'en'; // Hermes fork: UI language
   // Smart date recognition settings
   enableSmartDateRecognition: boolean; // when true, enables natural language date parsing
   smartDateRemoveKeywords: boolean; // when true, removes natural language text after conversion
@@ -85,7 +87,7 @@ export const DefaultStateTransitionSettings: StateTransitionSettings = {
 export const DEFAULT_SAVED_SEARCHES: SavedSearch[] = [
   {
     id: 'default-today',
-    name: 'Today',
+    name: t('filter.today'),
     query: 'scheduled:today',
     viewMode: 'hideCompleted',
     sortMethod: 'sortByScheduled',
@@ -93,7 +95,7 @@ export const DEFAULT_SAVED_SEARCHES: SavedSearch[] = [
   },
   {
     id: 'default-overdue',
-    name: 'Overdue',
+    name: t('filter.overdue'),
     query: 'deadline:overdue',
     viewMode: 'hideCompleted',
     sortMethod: 'sortByDeadline',
@@ -101,7 +103,7 @@ export const DEFAULT_SAVED_SEARCHES: SavedSearch[] = [
   },
   {
     id: 'default-active',
-    name: 'Active',
+    name: t('filter.active'),
     query: 'state:active',
     viewMode: 'sortCompletedLast',
     sortMethod: 'sortByUrgency',
@@ -131,6 +133,7 @@ export const DefaultSettings: TodoTrackerSettings = {
   stateTransitions: DefaultStateTransitionSettings,
   trackClosedDate: false, // Disabled by default
   useExtendedCheckboxStyles: true, // Hermes fork: enable [/] and [-] by default
+  language: 'zh', // Hermes fork: default to Chinese UI
   // Smart date recognition settings
   enableSmartDateRecognition: true, // Enabled by default
   smartDateRemoveKeywords: true, // Remove natural language text after conversion

@@ -19,6 +19,7 @@ import { EventCoordinator } from './services/event-coordinator';
 import { TaskUpdateCoordinator } from './services/task-update-coordinator';
 import { TodoseqCodeBlockProcessor } from './view/embedded-task-list/code-block-processor';
 import { TimeLineRecorder } from './services/timeline-recorder';
+import { t, setLang } from './i18n/base';
 import {
   smartDatePlugin,
   smartDateHighlightPlugin,
@@ -38,6 +39,11 @@ export class PluginLifecycleManager {
    */
   async onload() {
     await this.loadSettings();
+
+    // Apply language setting
+    if (this.plugin.settings?.language) {
+        setLang(this.plugin.settings.language as 'zh' | 'en');
+    }
 
     // Load urgency coefficients on startup
     const urgencyCoefficients = await parseUrgencyCoefficients(this.plugin.app);
@@ -174,8 +180,8 @@ export class PluginLifecycleManager {
 
     // Add command to show tasks
     this.plugin.addCommand({
+      name: t('cmd.show-task-list'),
       id: 'show-task-list',
-      name: 'Show task list',
       icon: 'list-todo',
       callback: () => this.plugin.uiManager.showTasks(),
     });
@@ -183,7 +189,7 @@ export class PluginLifecycleManager {
     // Add command to show tasks in a new tab
     this.plugin.addCommand({
       id: 'show-task-list-in-new-tab',
-      name: 'Open task list in new tab',
+      name: t('cmd.open-in-new-tab'),
       icon: 'list-todo',
       callback: () => this.plugin.uiManager.showTasksInNewTab(),
     });
@@ -191,7 +197,7 @@ export class PluginLifecycleManager {
     // Add command to rescan vault
     this.plugin.addCommand({
       id: 'rescan-vault',
-      name: 'Rescan vault',
+      name: t('cmd.rescan'),
       icon: 'refresh-cw',
       callback: async () => {
         await this.plugin.vaultScanner?.scanVault();
@@ -201,7 +207,7 @@ export class PluginLifecycleManager {
     // Add editor command to toggle task state
     this.plugin.addCommand({
       id: 'toggle-task-state',
-      name: 'Toggle task state',
+      name: t('cmd.toggle-state'),
       icon: 'square-check',
       editorCheckCallback: (
         checking: boolean,
@@ -219,7 +225,7 @@ export class PluginLifecycleManager {
     // Add editor command to cycle task state
     this.plugin.addCommand({
       id: 'cycle-task-state',
-      name: 'Cycle task state',
+      name: t('cmd.cycle-state'),
       icon: 'circle-check',
       editorCheckCallback: (
         checking: boolean,
@@ -237,7 +243,7 @@ export class PluginLifecycleManager {
     // Add editor command to add scheduled date
     this.plugin.addCommand({
       id: 'add-scheduled-date',
-      name: 'Add scheduled date',
+      name: t('cmd.add-scheduled'),
       icon: 'calendar-clock',
       editorCheckCallback: (
         checking: boolean,
@@ -255,7 +261,7 @@ export class PluginLifecycleManager {
     // Add editor command to add deadline date
     this.plugin.addCommand({
       id: 'add-deadline-date',
-      name: 'Add deadline date',
+      name: t('cmd.add-deadline'),
       icon: 'calendar-range',
       editorCheckCallback: (
         checking: boolean,
@@ -273,7 +279,7 @@ export class PluginLifecycleManager {
     // Add editor command to add description
     this.plugin.addCommand({
       id: 'add-description',
-      name: 'Add description',
+      name: t('cmd.add-description'),
       icon: 'text',
       editorCheckCallback: (
         checking: boolean,
@@ -291,7 +297,7 @@ export class PluginLifecycleManager {
     // Add editor command to set high priority
     this.plugin.addCommand({
       id: 'set-priority-high',
-      name: 'Set priority high',
+      name: t('cmd.set-priority-high'),
       icon: 'chevrons-up',
       editorCheckCallback: ((
         checking: boolean,
@@ -313,7 +319,7 @@ export class PluginLifecycleManager {
     // Add editor command to set medium priority
     this.plugin.addCommand({
       id: 'set-priority-medium',
-      name: 'Set priority medium',
+      name: t('cmd.set-priority-medium'),
       icon: 'chevron-up',
       editorCheckCallback: ((
         checking: boolean,
@@ -335,7 +341,7 @@ export class PluginLifecycleManager {
     // Add editor command to set low priority
     this.plugin.addCommand({
       id: 'set-priority-low',
-      name: 'Set priority low',
+      name: t('cmd.set-priority-low'),
       icon: 'chevrons-down',
       editorCheckCallback: ((
         checking: boolean,
@@ -357,7 +363,7 @@ export class PluginLifecycleManager {
     // Add editor command to copy task to today's daily note
     this.plugin.addCommand({
       id: 'copy-task-to-today',
-      name: 'Copy task to today',
+      name: t('cmd.copy-today'),
       icon: 'copy',
       editorCheckCallback: (
         checking: boolean,
@@ -375,7 +381,7 @@ export class PluginLifecycleManager {
     // Add editor command to move task to today's daily note
     this.plugin.addCommand({
       id: 'move-task-to-today',
-      name: 'Move task to today',
+      name: t('cmd.move-today'),
       icon: 'arrow-right',
       editorCheckCallback: (
         checking: boolean,
@@ -393,7 +399,7 @@ export class PluginLifecycleManager {
     // Add editor command to migrate task to today's daily note
     this.plugin.addCommand({
       id: 'migrate-task-to-today',
-      name: 'Migrate task to today',
+      name: t('cmd.migrate-today'),
       icon: 'arrow-up-right',
       editorCheckCallback: (
         checking: boolean,
@@ -411,7 +417,7 @@ export class PluginLifecycleManager {
     // Add editor command to open context menu
     this.plugin.addCommand({
       id: 'open-context-menu',
-      name: 'Open context menu',
+      name: t('cmd.open-context-menu'),
       icon: 'square-menu',
       editorCheckCallback: (
         checking: boolean,
@@ -429,7 +435,7 @@ export class PluginLifecycleManager {
     // Add editor command to open scheduled date picker
     this.plugin.addCommand({
       id: 'open-scheduled-date-picker',
-      name: 'Open scheduled date picker',
+      name: t('cmd.open-scheduled-picker'),
       icon: 'calendar-clock',
       editorCheckCallback: (
         checking: boolean,
@@ -447,7 +453,7 @@ export class PluginLifecycleManager {
     // Add editor command to open deadline date picker
     this.plugin.addCommand({
       id: 'open-deadline-date-picker',
-      name: 'Open deadline date picker',
+      name: t('cmd.open-deadline-picker'),
       icon: 'calendar-range',
       editorCheckCallback: (
         checking: boolean,
@@ -469,7 +475,7 @@ export class PluginLifecycleManager {
       // Refresh all task list views to show "Scanning vault..." message
       // This updates views that have no tasks yet to indicate scan is in progress
       this.plugin.uiManager.refreshOpenTaskListViews().catch((error) => {
-        new Notice('Failed to refresh task list');
+        new Notice(t('error.refresh-list'));
         console.error('Error refreshing task list:', error);
       });
       this.plugin.embeddedTaskListProcessor?.refreshAllEmbeddedTaskLists();
@@ -480,7 +486,7 @@ export class PluginLifecycleManager {
       window.setTimeout(() => {
         // Explicitly refresh the TaskListView to ensure it updates
         this.plugin.uiManager.refreshOpenTaskListViews().catch((error) => {
-          new Notice('Failed to refresh task list');
+          new Notice(t('error.refresh-list'));
           console.error('Error refreshing task list:', error);
         });
         // Also refresh embedded lists
@@ -509,7 +515,7 @@ export class PluginLifecycleManager {
       // eslint-disable-next-line obsidianmd/ui/sentence-case -- "Open TODOseq" is a proper name, not a sentence
       this.plugin.addRibbonIcon(TASK_VIEW_ICON, 'Open TODOseq', () => {
         this.plugin.uiManager.showTasks().catch((error) => {
-          new Notice('Failed to open task list');
+          new Notice(t('error.open-list'));
           console.error('Error opening task list:', error);
         });
       });
@@ -555,7 +561,7 @@ export class PluginLifecycleManager {
         await this.plugin.saveSettings();
         // First install: reveal=true to show the sidebar and bring view into focus
         this.plugin.uiManager.showTasks(true).catch((error) => {
-          new Notice('Failed to open task list');
+          new Notice(t('error.open-list'));
           console.error('Error opening task list:', error);
         });
       } else if (isReload) {
@@ -565,7 +571,7 @@ export class PluginLifecycleManager {
           TODOSEQ_HOT_RELOAD_FLAG
         ] = false;
         this.plugin.uiManager.showTasks(false).catch((error) => {
-          new Notice('Failed to open task list');
+          new Notice(t('error.open-list'));
           console.error('Error opening task list:', error);
         });
       }

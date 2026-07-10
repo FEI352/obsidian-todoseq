@@ -1180,7 +1180,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
       .addSetting((setting) => {
         setting
           .setName(t('settings.display.default-sort'))
-          .setDesc('Choose the default sort method for the task list.')
+          .setDesc(t('sort.default-desc'))
           .addDropdown((drop) => {
             drop.addOption('default', 'Default (file path)');
             drop.addOption('sortByScheduled', 'Scheduled date');
@@ -1541,6 +1541,25 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
                 await this.plugin.recreateParser();
                 // Update KeywordManager in TaskWriter with new settings
                 this.plugin.updateTaskWriterKeywordManager();
+              }),
+          )
+      })
+      .addSetting((setting) => {
+        setting
+          .setName(t('settings.display.language'))
+          .setDesc(t('settings.display.language-desc'))
+          .addDropdown((dropdown) =>
+            dropdown
+              .addOption('zh', '简体中文')
+              .addOption('en', 'English')
+              .setValue(this.plugin.settings.language || 'zh')
+              .onChange(async (value) => {
+                this.plugin.settings.language = value as 'zh' | 'en';
+                await this.plugin.saveSettings();
+                // Reload settings to apply language change
+                (this.plugin as any).settings.language = value;
+                this.plugin.saveSettings();
+                this.display();
               }),
           );
       });
