@@ -18,6 +18,7 @@ import { PropertySearchEngine } from './services/property-search-engine';
 import { EventCoordinator } from './services/event-coordinator';
 import { TaskUpdateCoordinator } from './services/task-update-coordinator';
 import { TodoseqCodeBlockProcessor } from './view/embedded-task-list/code-block-processor';
+import { TimeLineRecorder } from './services/timeline-recorder';
 import {
   smartDatePlugin,
   smartDateHighlightPlugin,
@@ -516,6 +517,13 @@ export class PluginLifecycleManager {
 
     // Auto-open task view in right sidebar when plugin loads
     // Use onLayoutReady to ensure workspace is fully initialized
+
+    // Initialize TimeLineRecorder — records task state changes to JSONL timeline
+    const timelineRecorder = new TimeLineRecorder(this.plugin.app);
+    this.plugin.taskStateManager.onStateChange = (oldTask, newTask) => {
+      void timelineRecorder.record(oldTask, newTask);
+    };
+
     this.plugin.app.workspace.onLayoutReady(async () => {
       // Set initialization flag to show scanning message immediately
       // This ensures views show "Scanning vault..." before the scan starts

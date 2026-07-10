@@ -15,6 +15,12 @@ export class TaskStateManager {
   private pendingNotification = false;
   private keywordManager: KeywordManager;
 
+  /**
+   * Callback fired when any tracked task's state changes.
+   * Receives the old state and new state for comparison.
+   */
+  public onStateChange?: (oldTask: Task, newTask: Task) => void;
+
   constructor(keywordManager: KeywordManager) {
     this.keywordManager = keywordManager;
   }
@@ -45,7 +51,28 @@ export class TaskStateManager {
    * @param tasks New tasks array
    */
   setTasks(tasks: Task[]): void {
+    const oldTasks = this._tasks;
     this._tasks = tasks;
+
+    // Detect state changes and fire onStateChange
+    if (this.onStateChange) {
+      const oldMap = new Map<string, Task>();
+      for (const t of oldTasks) {
+        oldMap.set(`${t.path}:${t.line}`, t);
+      }
+      for (const newTask of tasks) {
+        const key = `${newTask.path}:${newTask.line}`;
+        const oldTask = oldMap.get(key);
+        if (oldTask && (oldTask.state !== newTask.state || oldTask.completed !== newTask.completed)) {
+          try {
+            this.onStateChange(oldTask, newTask);
+          } catch (e) {
+            console.error('[TaskStateManager] onStateChange error:', e);
+          }
+        }
+      }
+    }
+
     this.notifySubscribers();
   }
 
