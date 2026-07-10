@@ -172,6 +172,9 @@ export class ReaderViewFormatter {
       // Process DESCRIPTION lines
       this.processDescriptionLines(element);
 
+      // Process elapsed time: inject <sub>X min</sub> into completed task lines
+      this.processElapsedTime(element, context);
+
       // Attach checkbox click handlers for task state toggling
       this.attachCheckboxClickHandlers(element, context);
 
@@ -1780,6 +1783,106 @@ export class ReaderViewFormatter {
       // Process date keywords in this task container
       this.processDateKeywordsInElement(taskContainer);
     });
+  }
+
+  /**
+   * Read task timeline JSONL files and inject `<sub>X min</sub>` for completed tasks.
+   * Looks at completed task list items, finds matching start/done events in the
+   * timeline, and renders the elapsed time. Source file is never modified.
+   */
+  private async processElapsedTime(
+    element: HTMLElement,
+    context: { sourcePath?: string },
+  ): Promise<void> {
+    if (!context?.sourcePath) return;
+
+    // Find completed task list items in this element
+    const taskItems = element.querySelectorAll('li.task-list-item[data-task="x"]');
+    if (taskItems.length === 0) return;
+
+    // Load timeline events for this file (last 30 days)
+    const events = await this.loadTimelineEvents(context.sourcePath);
+    if (events.length === 0) return;
+
+    for (const item of taskItems) {
+      // Skip if already has a <sub> element
+      if (item.querySelector('.todoseq-elapsed-time')) continue;
+
+      const line = item.getAttribute('data-line');
+      if (!line) continue;
+      const lineNum = parseInt(line, 10);
+      if (isNaN(lineNum)) continue;
+
+      // Find start and done events for this task
+      const start = events.find((e) => e.line === lineNum && e.action === 'start');
+      const done = events.find((e) => e.line === lineNum && e.action === 'done');
+      if (!start || !done) continue;
+
+      // Calculate elapsed
+      const elapsedMs = new Date(done.at).getTime() - new Date(start.at).getTime();
+      if (elapsedMs <= 0) continue;
+
+      const elapsedText = this.formatElapsed(elapsedMs);
+
+      // Create <sub> element using Obsidian DOM helpers
+      const subEl = document.createElement('sub');
+      subEl.className = 'todoseq-elapsed-time';
+      subEl.textContent = elapsedText;
+      subEl.setAttribute('data-elapsed-ms', String(elapsedMs));
+      subEl.setAttribute('aria-label', `Duration: ${elapsedText}`);
+
+      // Insert after the task text span
+      const taskText = item.querySelector('.task-list-item-text') || item;
+      taskText.appendChild(subEl);
+    }
+  }
+
+  /**
+   * Format elapsed milliseconds as human-readable string.
+   */
+  private formatElapsed(ms: number): string {
+    const totalSec = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSec / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    const seconds = totalSec % 60;
+    if (hours > 0) return `${hours}h${minutes}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${seconds}s`;
+  }
+
+  /**
+   * Load timeline events for a file from JSONL files in the past 30 days.
+   */
+  private async loadTimelineEvents(
+    filePath: string,
+  ): Promise<import('../../services/timeline-recorder').TimelineEvent[]> {
+    const basePath = 'notes/quickilynotes/task-timeline';
+    const events: import('../../services/timeline-recorder').TimelineEvent[] = [];
+    const today = new Date();
+
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const timelineFile = this.plugin.app.vault.getAbstractFileByPath(
+        `${basePath}/${dateStr}.jsonl`,
+      );
+      if (timelineFile instanceof TFile) {
+        const content = await this.plugin.app.vault.cachedRead(timelineFile);
+        for (const line of content.split('\n')) {
+          if (!line.trim()) continue;
+          try {
+            const ev = JSON.parse(line);
+            if (ev.file === filePath) {
+              events.push(ev);
+            }
+          } catch {
+            // Skip malformed lines
+          }
+        }
+      }
+    }
+    return events;
   }
 
   /**

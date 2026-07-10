@@ -2525,3 +2525,25 @@
 .todoseq-dropdown .search-suggest-history-item:hover .suggestion-aux {
   opacity: 1;
 }
+
+/* Elapsed time badge for completed tasks — injected by processElapsedTime */
+.markdown-preview-view .todoseq-elapsed-time,
+.markdown-source-view.is-live-preview .todoseq-elapsed-time {
+  font-size: 0.7em;
+  color: var(--text-muted);
+  margin-left: 0.4em;
+  font-weight: 400;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-preview-view .todoseq-elapsed-time::before,
+.markdown-source-view.is-live-preview .todoseq-elapsed-time::before {
+  content: "⏱ ";
+  margin-right: 0.15em;
+  opacity: 0.7;
+}
+
+.todoseq-elapsed-time[data-elapsed-ms="0"] {
+  display: none;
+}
