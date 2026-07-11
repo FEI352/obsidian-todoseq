@@ -1545,12 +1545,10 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
                 );
             })
             .addSetting((setting) => {
-              // Diagnostic helper: open the in-vault debug log in a new leaf,
-              // or copy its contents to the clipboard if it doesn't exist yet.
               setting
                 .setName('Debug Log')
                 .setDesc(
-                  'Click "Open" to view TODOseq-debug.log in a new pane. Click "Copy" to copy the log contents to the clipboard.',
+                  'Click "Open" to view TODOseq-debug.log in a new pane. Click "Copy" to copy the log contents to the clipboard. Click "Diagnose \'[/]\'" to add a diagnostic entry tracing the checkbox-char computation for the current editor line.',
                 )
                 .addButton((button) =>
                   button.setButtonText('Open').onClick(async () => {
@@ -1577,6 +1575,55 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
                     const content = await adapter.read(path);
                     await navigator.clipboard.writeText(content);
                     new Notice('TODOseq: debug log copied to clipboard.');
+                  }),
+                )
+                .addButton((button) =>
+                  button.setButtonText('Diagnose \'[/]\'').onClick(async () => {
+                    const path = 'TODOseq-debug.log';
+                    const adapter = this.plugin.app.vault.adapter;
+                    const km = this.plugin.keywordManager;
+                    const lines: string[] = [];
+
+                    lines.push(`--- Diagnose at ${new Date().toISOString()} ---`);
+                    lines.push(`plugin.settings.useExtendedCheckboxStyles: ${this.plugin.settings.useExtendedCheckboxStyles}`);
+                    lines.push(`km.getSettings().useExtendedCheckboxStyles: ${(km as any).settings?.useExtendedCheckboxStyles}`);
+
+                    // Test all keywords the user cares about
+                    for (const kw of ['TODO', 'DOING', 'DONE', 'CANCELED']) {
+                      const charExt = km.getCheckboxState(kw, { useExtendedCheckboxStyles: true });
+                      const charPlain = km.getCheckboxState(kw);
+                      const isActive = km.isActive(kw);
+                      const isCompleted = km.isCompleted(kw);
+                      const isCanceled = km.isCanceled(kw);
+                      lines.push(`  ${kw}: isActive=${isActive} isCompleted=${isCompleted} isCanceled=${isCanceled} char(ext=${charExt}) char(plain=${JSON.stringify(charPlain)})`);
+                    }
+
+                    // Read the current editor line
+                    const activeView = this.plugin.app.workspace.getActiveViewOfType(
+                      (this.plugin.app.workspace as any).MarkdownView || (window as any).MarkdownView,
+                    ) as { editor?: any; file?: any } | null;
+                    if (activeView?.editor) {
+                      const line = activeView.editor.getLine(activeView.editor.getCursor().line);
+                      lines.push(`  editor cursor line: ${JSON.stringify(line)}`);
+                      // Test what generateTaskLine would produce
+                      const parser = this.plugin.vaultScanner?.getParser();
+                      if (parser) {
+                        const task = parser.parseLineAsTask(line, activeView.editor.getCursor().line, activeView.file?.path || '');
+                        if (task) {
+                          lines.push(`  parsed: state=${JSON.stringify(task.state)} text=${JSON.stringify(task.text)} listMarker=${JSON.stringify(task.listMarker)}`);
+                          const { TaskWriter } = await import('../services/task-writer');
+                          const result = TaskWriter.generateTaskLine(task, 'DOING', true, km);
+                          lines.push(`  generateTaskLine(task, 'DOING'): ${JSON.stringify(result.newLine)}`);
+                          const resultDONE = TaskWriter.generateTaskLine(task, 'DONE', true, km);
+                          lines.push(`  generateTaskLine(task, 'DONE'): ${JSON.stringify(resultDONE.newLine)}`);
+                        }
+                      }
+                    }
+
+                    const content = lines.join('\n') + '\n';
+                    await adapter.write(path, content);
+                    await navigator.clipboard.writeText(content);
+                    new Notice('TODOseq: diagnostic written to TODOseq-debug.log and copied to clipboard.');
                   }),
                 );
             })
