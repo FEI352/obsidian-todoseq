@@ -145,13 +145,28 @@ export class TaskWriter {
       // the checkbox and the keyword. The parser's captureCheckboxRegex
       // consumes these via a non-capturing group, so they're not in task.text
       // but still present in task.rawText. Rather than reconstructing the line
-      // from components (which drops the prefix), swap the keyword in rawText.
+      // from components (which drops the prefix), swap the keyword in rawText
+      // and also update the checkbox character to reflect the new state
+      // (e.g. " [ ] DOING" → " [/] DOING" so the half-filled box renders).
       if (task.state && textWithoutQuote.includes(task.state)) {
-        // " [ ] 12:23 TODO 666" → " [ ] 12:23 DOING 666"  (swap keyword only)
-        const updatedWithoutQuote = textWithoutQuote.replace(
-          task.state,
-          newState,
-        );
+        // Compute the new checkbox char for the new state.
+        let newCheckboxChar = checkboxStatus;
+        if (!isArchived) {
+          newCheckboxChar = keywordManagerInstance.getCheckboxState(
+            newState,
+            keywordManagerInstance.getSettings(),
+          );
+        } else {
+          // For archived states keep whatever was there before.
+          newCheckboxChar = currentCheckboxState;
+        }
+
+        const updatedWithoutQuote = textWithoutQuote
+          // Replace the checkbox state char first so the keyword swap below
+          // doesn't accidentally hit it.
+          .replace(/\[[ xX\-/]\]/, `[${newCheckboxChar}]`)
+          // Then swap the keyword itself.
+          .replace(task.state, newState);
         newLine = `${indentWithoutQuote}${quotePrefix}${updatedWithoutQuote}`;
       } else {
         const textPart = task.text ? ` ${task.text}` : '';
