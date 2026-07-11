@@ -141,8 +141,22 @@ export class TaskWriter {
         );
       }
 
-      const textPart = task.text ? ` ${task.text}` : '';
-      newLine = `${indentWithoutQuote}${quotePrefix}${currentListMarkerChar} [${checkboxStatus}] ${newState}${priorityPart}${textPart}`;
+      // Preserve any prefix tokens (e.g. HH:mm timestamp) that sit between
+      // the checkbox and the keyword. The parser's captureCheckboxRegex
+      // consumes these via a non-capturing group, so they're not in task.text
+      // but still present in task.rawText. Rather than reconstructing the line
+      // from components (which drops the prefix), swap the keyword in rawText.
+      if (task.state && textWithoutQuote.includes(task.state)) {
+        // " [ ] 12:23 TODO 666" → " [ ] 12:23 DOING 666"  (swap keyword only)
+        const updatedWithoutQuote = textWithoutQuote.replace(
+          task.state,
+          newState,
+        );
+        newLine = `${indentWithoutQuote}${quotePrefix}${updatedWithoutQuote}`;
+      } else {
+        const textPart = task.text ? ` ${task.text}` : '';
+        newLine = `${indentWithoutQuote}${quotePrefix}${currentListMarkerChar} [${checkboxStatus}] ${newState}${priorityPart}${textPart}`;
+      }
     } else {
       // Generate original format, preserving comment prefix if present
       const textPart = task.text ? ` ${task.text}` : ' ';
