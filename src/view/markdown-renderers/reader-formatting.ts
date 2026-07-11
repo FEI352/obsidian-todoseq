@@ -548,11 +548,14 @@ export class ReaderViewFormatter {
               checkbox.checked = dataTaskChar !== ' ';
             } else {
               // Default behavior: use standard checkbox states
-              // For active keywords, use '/' so CSS can apply active styling
+              // For active and cancelled keywords, use '/' or '-' so CSS
+              // can apply active/cancelled styling — bypass the toggle gate.
               if (keywordManager.isActive(keyword)) {
                 dataTaskChar = '/';
               } else if (keywordManager.isCompleted(keyword)) {
                 dataTaskChar = 'x';
+              } else if (keywordManager.isCanceled(keyword)) {
+                dataTaskChar = '-';
               } else {
                 dataTaskChar = ' ';
               }

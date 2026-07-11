@@ -943,11 +943,22 @@ export class TaskUpdateCoordinator {
       this.plugin.settings,
     );
 
-    // Get the checkbox state character for the new state
-    const newCheckboxState = KeywordManager.getCheckboxState(
-      newState,
-      this.plugin.settings,
-    );
+    // Get the checkbox state character for the new state.
+    // Bypass KeywordManager.getCheckboxState() gate — same reasoning as
+    // TaskWriter.generateTaskLine: the toggle confuses DOING→'/' because
+    // getCheckboxState checks useExtendedCheckboxStyles which may be false.
+    // Direct keyword-group check instead.
+    let newCheckboxState: string;
+    const keywordManager = this.plugin.keywordManager;
+    if (keywordManager.isCompleted(newState)) {
+      newCheckboxState = 'x';
+    } else if (keywordManager.isActive(newState)) {
+      newCheckboxState = '/';
+    } else if (keywordManager.isCanceled(newState)) {
+      newCheckboxState = '-';
+    } else {
+      newCheckboxState = ' ';
+    }
 
     const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
 

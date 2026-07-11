@@ -134,11 +134,23 @@ export class TaskWriter {
         // Preserve existing checkbox state for archived tasks
         checkboxStatus = currentCheckboxState;
       } else {
-        // Get the checkbox state character for the new state
-        checkboxStatus = keywordManagerInstance.getCheckboxState(
-          newState,
-          keywordManagerInstance.getSettings(),
-        );
+        // Get the checkbox state character for the new state.
+        // NOTE: we bypass keywordManager.getCheckboxState() here because
+        // that method gates '/' (active) and '-' (canceled) behind the
+        // useExtendedCheckboxStyles setting toggle. When the toggle is off,
+        // getCheckboxState('DOING') returns ' ' instead of '/', and users
+        // in our fork always want '[/]' for DOING/NOW regardless of the
+        // toggle — the toggle only controls CSS rendering of the char.
+        // Direct keyword-group check is simpler and always correct.
+        if (keywordManagerInstance.isCompleted(newState)) {
+          checkboxStatus = 'x';
+        } else if (keywordManagerInstance.isActive(newState)) {
+          checkboxStatus = '/';
+        } else if (keywordManagerInstance.isCanceled(newState)) {
+          checkboxStatus = '-';
+        } else {
+          checkboxStatus = ' ';
+        }
       }
 
       // Preserve any prefix tokens (e.g. HH:mm timestamp) that sit between
@@ -150,12 +162,18 @@ export class TaskWriter {
       // (e.g. " [ ] DOING" → " [/] DOING" so the half-filled box renders).
       if (task.state && textWithoutQuote.includes(task.state)) {
         // Compute the new checkbox char for the new state.
+        // Same bypass of getCheckboxState toggle gate as above.
         let newCheckboxChar = checkboxStatus;
         if (!isArchived) {
-          newCheckboxChar = keywordManagerInstance.getCheckboxState(
-            newState,
-            keywordManagerInstance.getSettings(),
-          );
+          if (keywordManagerInstance.isCompleted(newState)) {
+            newCheckboxChar = 'x';
+          } else if (keywordManagerInstance.isActive(newState)) {
+            newCheckboxChar = '/';
+          } else if (keywordManagerInstance.isCanceled(newState)) {
+            newCheckboxChar = '-';
+          } else {
+            newCheckboxChar = ' ';
+          }
         } else {
           // For archived states keep whatever was there before.
           newCheckboxChar = currentCheckboxState;
