@@ -375,6 +375,40 @@ describe('TaskParser', () => {
         expect(result).toBeNull();
       });
     });
+
+    describe('HH:mm prefix support', () => {
+      // Regression: testRegex used to reject "[ ] 12:23 TODO 666" because the
+      // strict regex required the keyword to immediately follow the checkbox.
+      // The OR-fallback in isTaskLine() now routes these lines through
+      // captureCheckboxRegex, and parseLineAsTask() inherits the fix.
+
+      test('isTaskLine recognises HH:mm-prefixed checkbox tasks', () => {
+        expect(parser.isTaskLine('[ ] 12:23 TODO 666')).toBe(true);
+        expect(parser.isTaskLine('[/] 12:44 DOING 777')).toBe(true);
+        expect(parser.isTaskLine('[x] 12:59 DONE 888')).toBe(true);
+      });
+
+      test('isTaskLine still rejects comment-style lines', () => {
+        // "TODO" alone is a task (no checkbox), but "TODO foo" preceded by
+        // comment markers stays rejected — the strict testRegex path enforces this.
+        expect(parser.isTaskLine('// TODO ignored')).toBe(false);
+      });
+
+      test('parseLineAsTask resolves HH:mm-prefixed state correctly', () => {
+        const line = '[ ] 12:23 TODO 666';
+        const result = parser.parseLineAsTask(line, 0, 'test.md');
+        expect(result).not.toBeNull();
+        expect(result?.state).toBe('TODO');
+      });
+
+      test('parseLineAsTask resolves HH:mm-prefixed DOING state', () => {
+        const line = '[/] 12:44 DOING 777';
+        const result = parser.parseLineAsTask(line, 0, 'test.md');
+        expect(result).not.toBeNull();
+        expect(result?.state).toBe('DOING');
+        expect(result?.completed).toBe(false);
+      });
+    });
   });
 
   describe('Custom keywords', () => {

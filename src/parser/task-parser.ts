@@ -537,6 +537,15 @@ export class TaskParser implements ITaskParser {
   }
 
   /**
+   * Like `isTaskLine` but exposed under a name that reads better at call sites
+   * that just want to gate on "does this line look like a TODOseq task?".
+   * Same semantics as `isTaskLine`.
+   */
+  public matchesAsTask(line: string): boolean {
+    return this.isTaskLine(line);
+  }
+
+  /**
    * Fast-path check to determine if the string even contains known syntax keywords.
    * If false, the file is guaranteed to have no parseable tasks, skipping regex overhead.
    */
@@ -564,7 +573,10 @@ export class TaskParser implements ITaskParser {
     // This allows dynamic keyword updates while maintaining shared KeywordManager
     this.allKeywords = config.keywords ?? this.keywordManager.getAllKeywords();
 
-    // Rebuild regex with new keywords
+    // Rebuild regex with new keywords. CRITICAL: captureCheckboxRegex must
+    // also be rebuilt — otherwise isTaskLine()'s OR-fallback uses a stale
+    // keyword set after the user edits keywords in settings, breaking
+    // detection of HH:mm-prefixed checkbox tasks under the new keywords.
     const regex = TaskParser.buildRegex(this.allKeywords);
     (this as { testRegex: RegExp }).testRegex = regex.test;
     (this as { captureRegex: RegExp }).captureRegex = regex.capture;

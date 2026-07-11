@@ -30,6 +30,25 @@ import {
 import { KeywordManager } from '../../utils/keyword-manager';
 
 /**
+ * Decide whether a parser considers the given line a task. Real `TaskParser`
+ * implementations ship `isTaskLine()` which already OR-falls-back to
+ * `captureCheckboxRegex` for HH:mm-prefixed checkbox tasks like
+ * "[ ] 12:23 TODO 666". Older mock parsers (used in unit tests) may only
+ * expose `testRegex`, so we fall through to that — keeping the existing
+ * test doubles working without changing every call site to know about
+ * the dual shape.
+ */
+function parserMatchesAsTask(
+  parser: { isTaskLine?: (line: string) => boolean; testRegex?: RegExp },
+  line: string,
+): boolean {
+  if (typeof parser.isTaskLine === 'function') {
+    return parser.isTaskLine(line);
+  }
+  return parser.testRegex ? parser.testRegex.test(line) : false;
+}
+
+/**
  * Cached regex for priority tokens with global flag.
  * Created once at module load time to avoid repeated compilation.
  */
@@ -231,11 +250,16 @@ export class TaskKeywordDecorator {
               footnoteMarkerMatch[0].length,
             );
 
-            // Check if the content after footnote marker contains a task
-            if (this.parser.testRegex.test(contentAfterFootnote)) {
-              // Use the original parser regex but adjust positions
-              const contentMatch =
-                this.parser.testRegex.exec(contentAfterFootnote);
+            // Use the parserMatchesAsTask() OR-fallback for HH:mm-prefixed checkbox
+            // tasks ("[ ] 12:23 TODO 666"). Legacy mock parsers in tests
+            // may not implement isTaskLine(), so fall through to testRegex.
+            if (parserMatchesAsTask(this.parser, contentAfterFootnote)) {
+              // Use the permissive captureCheckboxRegex so the match's
+              // group 4 = keyword survives even when HH:mm sits between
+              // the checkbox and the keyword.
+              const contentMatch = this.parser.captureCheckboxRegex
+                ? this.parser.captureCheckboxRegex.exec(contentAfterFootnote)
+                : this.parser.testRegex.exec(contentAfterFootnote);
               if (contentMatch) {
                 match = contentMatch;
                 // Use the position after the footnote marker
@@ -283,18 +307,25 @@ export class TaskKeywordDecorator {
           this.settings.includeCodeBlocks &&
           (!this.currentLanguage || !this.settings.languageCommentSupport)
         ) {
-          // Use standard regex for code blocks when language comment support is disabled or no language detected
-          if (this.parser.testRegex.test(lineText)) {
-            match = this.parser.testRegex.exec(lineText);
+          // Use standard regex for code blocks when language comment support is disabled or no language detected.
+          // parserMatchesAsTask() OR-falls-back to captureCheckboxRegex so HH:mm-prefixed
+          // checkbox tasks ("[ ] 12:23 TODO 666") are still recognised.
+          if (parserMatchesAsTask(this.parser, lineText)) {
+            match = this.parser.captureCheckboxRegex
+              ? this.parser.captureCheckboxRegex.exec(lineText)
+              : this.parser.testRegex.exec(lineText);
           }
         } else if (
           !this.inCommentBlock ||
           this.settings.includeCommentBlocks ||
           (singleLineCommentMatch && this.settings.includeCommentBlocks)
         ) {
-          // Use standard regex for non-code blocks, but skip if we're in a comment block and comment blocks are disabled
-          if (this.parser.testRegex.test(contentForTaskDetection)) {
-            match = this.parser.testRegex.exec(contentForTaskDetection);
+          // Use standard regex for non-code blocks, but skip if we're in a comment block and comment blocks are disabled.
+          // Same OR-fallback reasoning as above — see task-parser.isTaskLine().
+          if (parserMatchesAsTask(this.parser, contentForTaskDetection)) {
+            match = this.parser.captureCheckboxRegex
+              ? this.parser.captureCheckboxRegex.exec(contentForTaskDetection)
+              : this.parser.testRegex.exec(contentForTaskDetection);
           }
         }
 
@@ -770,8 +801,10 @@ export class TaskKeywordDecorator {
    * Priority tokens should only be decorated on actual task lines
    */
   private isTaskLine(lineText: string): boolean {
-    // Use the parser's test regex to check if this line contains a task
-    return this.parser.testRegex.test(lineText);
+    // Delegates to parserMatchesAsTask() so HH:mm-prefixed checkbox tasks
+    // ("[ ] 12:23 TODO 666") are matched. The helper also tolerates legacy
+    // mock parsers that only ship testRegex.
+    return parserMatchesAsTask(this.parser, lineText);
   }
 
   /**

@@ -27,6 +27,25 @@ const PRIORITY_TOKEN_REGEX_GLOBAL = new RegExp(
  * Handles task keyword formatting in the reader view
  * Applies styling to task keywords, SCHEDULED, and DEADLINE lines
  */
+
+/**
+ * Decide whether a parser considers the given line a task. Real `TaskParser`
+ * implementations ship `isTaskLine()` which already OR-falls-back to
+ * `captureCheckboxRegex` for HH:mm-prefixed checkbox tasks like
+ * "[ ] 12:23 TODO 666". Older mock parsers (used in unit tests) may only
+ * expose `testRegex`, so we fall through to that — keeping the existing
+ * test doubles working without changing every call site to know about
+ * the dual shape.
+ */
+function matchesAsTask(
+  parser: { isTaskLine?: (line: string) => boolean; testRegex?: RegExp },
+  line: string,
+): boolean {
+  if (typeof parser.isTaskLine === 'function') {
+    return parser.isTaskLine(line);
+  }
+  return parser.testRegex ? parser.testRegex.test(line) : false;
+}
 export class ReaderViewFormatter {
   private settingsDetector: SettingsChangeDetector;
   private menuBuilder: StateMenuBuilder;
@@ -390,7 +409,9 @@ export class ReaderViewFormatter {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      if (taskParser.testRegex.test(line)) {
+      // Use matchesAsTask() OR-fallback so HH:mm-prefixed checkbox tasks
+      // ("[ ] 12:23 TODO 666") are matched.
+      if (matchesAsTask(taskParser, line)) {
         // For checkbox tasks, the line format is: "- [ ] TODO text" or "- [x] TODO text"
         // We need to compare just the task part (after the checkbox)
         // Also remove any block reference ID (^reference) from the end
@@ -713,10 +734,7 @@ export class ReaderViewFormatter {
       // Only process priority pills in lines that contain task keywords
       // This matches the editor behavior which checks isTaskLine() before processing
       const taskParser = this.getTaskParser();
-      if (
-        taskParser &&
-        !taskParser.testRegex.test(paragraph.textContent || '')
-      ) {
+      if (taskParser && !matchesAsTask(taskParser, paragraph.textContent || '')) {
         return;
       }
 
@@ -966,10 +984,20 @@ export class ReaderViewFormatter {
     const taskText = taskElement.textContent || '';
 
     // Use the task parser to test this task text
-    const testResult = taskParser.testRegex.test(taskText);
+    const testResult = matchesAsTask(taskParser, taskText);
 
     if (testResult) {
-      const match = taskParser.testRegex.exec(taskText);
+      // captureCheckboxRegex keeps group[4] = keyword for HH:mm-prefixed
+      // checkbox lines, but for plain keyword-only text (no checkbox) it
+      // requires a checkbox and won't match — fall back to testRegex
+      // which matches whenever matchesAsTask() returned true.
+      let match: RegExpExecArray | null = null;
+      if (taskParser.captureCheckboxRegex) {
+        match = taskParser.captureCheckboxRegex.exec(taskText);
+      }
+      if (!match && taskParser.testRegex) {
+        match = taskParser.testRegex.exec(taskText);
+      }
 
       if (match && match[4]) {
         // match[4] contains the keyword
@@ -1234,17 +1262,29 @@ export class ReaderViewFormatter {
     const listItemText = listItem.textContent || '';
 
     // Use the task parser to test if this contains a task
-    if (!taskParser.testRegex.test(listItemText)) {
+    if (!matchesAsTask(taskParser, listItemText)) {
       return;
     }
 
-    const match = taskParser.testRegex.exec(listItemText);
-    if (!match || !match[4]) {
+    const match = taskParser.captureCheckboxRegex
+      ? taskParser.captureCheckboxRegex.exec(listItemText)
+      : taskParser.testRegex.exec(listItemText);
+    if (!match && taskParser.testRegex) {
+      // Plain keyword-only text (no checkbox) won't match captureCheckboxRegex.
+    }
+    // Same fallback pattern as above for HH:mm tasks: try captureCheckboxRegex
+    // first, then testRegex when group[4] resolution needs to land on a
+    // plain "TODO foo" style line.
+    let resolvedMatch: RegExpExecArray | null = match;
+    if ((!resolvedMatch || !resolvedMatch[4]) && taskParser.testRegex) {
+      resolvedMatch = taskParser.testRegex.exec(listItemText);
+    }
+    if (!resolvedMatch || !resolvedMatch[4]) {
       return;
     }
 
     // match[4] contains the keyword
-    const keyword = match[4];
+    const keyword = resolvedMatch[4];
 
     // Check if this is a completed keyword for styling
     const isCompleted = KeywordManager.isCompletedKeyword(
@@ -1266,12 +1306,12 @@ export class ReaderViewFormatter {
     );
 
     // Find the keyword position in the text
-    const fullMatchStart = match.index || 0;
+    const fullMatchStart = resolvedMatch.index || 0;
     const keywordStart =
       fullMatchStart +
-      (match[1]?.length || 0) +
-      (match[2]?.length || 0) +
-      (match[3]?.length || 0);
+      (resolvedMatch[1]?.length || 0) +
+      (resolvedMatch[2]?.length || 0) +
+      (resolvedMatch[3]?.length || 0);
 
     // Find and replace the keyword in the list item's text nodes
     this.replaceKeywordInListItem(listItem, keyword, keywordStart, keywordSpan);
@@ -1459,11 +1499,24 @@ export class ReaderViewFormatter {
       return;
     }
 
-    // Use the task parser to test this line
-    const testResult = taskParser.testRegex.test(lineText);
+    // Use isTaskLine() so HH:mm-prefixed checkbox tasks still match.
+    const testResult = matchesAsTask(taskParser, lineText);
 
     if (testResult) {
-      const match = taskParser.testRegex.exec(lineText);
+      // Pick the regex that actually matches THIS line. For checkbox
+      // tasks the permissive `captureCheckboxRegex` resolves group[4] =
+      // keyword (it tolerates HH:mm between checkbox and keyword). For
+      // plain keyword-only lines (e.g. "TODO task text" with no
+      // checkbox), `captureCheckboxRegex` requires a checkbox and won't
+      // match — fall back to `testRegex` which always matches when
+      // matchesAsTask() returned true.
+      let match: RegExpExecArray | null = null;
+      if (taskParser.captureCheckboxRegex) {
+        match = taskParser.captureCheckboxRegex.exec(lineText);
+      }
+      if (!match && taskParser.testRegex) {
+        match = taskParser.testRegex.exec(lineText);
+      }
 
       if (match && match[4]) {
         // match[4] contains the keyword
@@ -2245,8 +2298,8 @@ export class ReaderViewFormatter {
       }
     }
 
-    // Also use the task parser to check for patterns
-    const parserResult = taskParser.testRegex.test(text);
+    // Also use the task parser to check for patterns.
+    const parserResult = matchesAsTask(taskParser, text);
     return parserResult;
   }
 

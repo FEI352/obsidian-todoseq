@@ -63,10 +63,24 @@ export const CHECKBOX_REGEX =
   /^(\s*)([-*+]\s*\[([ xX\-/])\])\s+([^\s]+)(?:\s+(.+))?$/;
 
 /**
- * Simple checkbox detection regex (without capture groups for state)
- * Matches: - [ ], - [x], etc., including indented lines.
+ * Simple checkbox detection regex (without capture groups for state).
+ * Matches: - [ ], - [x], etc., including indented lines, AND bare
+ * checkbox lines that the user wrote without a bullet, e.g.
+ * "[ ] TODO" or "[ ] 12:23 TODO 666".
+ *
+ * Why optional list marker:
+ *   `parseLineAsTask()` gates its captureCheckboxRegex fallback on this
+ *   regex matching. The main regex (`captureCheckboxRegex`) accepts
+ *   bare-checkbox lines, but `captureRegex` (== `testRegex`) rejects them
+ *   — so without the optional marker here, HH:mm-prefixed checkbox lines
+ *   would be silently dropped between the two passes.
+ *
+ * Capture groups (kept for backward compatibility with existing callers
+ * in `task-writer.ts`, `task-format.ts`, etc.):
+ *   1 = list marker (`-` / `*` / `+`) or `undefined` for bare checkbox
+ *   2 = checkbox status (`x` / `X` / ` ` / `-` / `/`)
  */
-export const CHECKBOX_DETECTION_REGEX = /^\s*([-*+])\s+\[([ xX\-/])\]\s*/;
+export const CHECKBOX_DETECTION_REGEX = /^\s*(?:([-*+])\s+)?\[([ xX\-/])\]\s*/;
 
 // ============================================================================
 // Prefix Patterns
