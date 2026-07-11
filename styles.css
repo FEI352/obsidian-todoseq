@@ -220,6 +220,28 @@
   );
 }
 
+/* Editor live preview checkbox styling for active and cancelled tasks.
+ * Obsidian renders markdown checkboxes as native <input type="checkbox">
+ * elements inside .task-list-item <li> blocks. The <li> gets data-task
+ * attribute set to the character ([/], [-], [x]) — not the <input>.
+ * Selector targets the wrapper <li> to apply the background. */
+.markdown-source-view.is-live-preview
+  .task-list-item[data-task='/'] {
+  background-color: color-mix(
+    in srgb,
+    var(--interactive-accent, #7f6df2) 33%,
+    transparent
+  );
+}
+.markdown-source-view.is-live-preview
+  .task-list-item[data-task='-'] {
+  background-color: color-mix(
+    in srgb,
+    var(--background-modifier-error, #e93147) 33%,
+    transparent
+  );
+}
+
 /* Non-clickable link-like styling for in-text links */
 .todoseq-panel .todoseq-task-link {
   color: var(--link-color);

@@ -1526,24 +1526,60 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
           });
       })
       .addSetting((setting) => {
-        setting
-          .setName(t('settings.display.extended-checkbox'))
-          .setDesc(
-            'When enabled, uses themed checkbox styles ([/], [-]) for active and cancelled tasks.',
-          )
-          .addToggle((toggle) =>
-            toggle
-              .setValue(this.plugin.settings.useExtendedCheckboxStyles)
-              .onChange(async (value) => {
-                this.plugin.settings.useExtendedCheckboxStyles = value;
-                await this.plugin.saveSettings();
-                // Re-create parser to update KeywordManager with new settings
-                await this.plugin.recreateParser();
-                // Update KeywordManager in TaskWriter with new settings
-                this.plugin.updateTaskWriterKeywordManager();
-              }),
-          )
-      })
+              setting
+                .setName(t('settings.display.extended-checkbox'))
+                .setDesc(
+                  'When enabled, uses themed checkbox styles ([/], [-]) for active and cancelled tasks.',
+                )
+                .addToggle((toggle) =>
+                  toggle
+                    .setValue(this.plugin.settings.useExtendedCheckboxStyles)
+                    .onChange(async (value) => {
+                      this.plugin.settings.useExtendedCheckboxStyles = value;
+                      await this.plugin.saveSettings();
+                      // Re-create parser to update KeywordManager with new settings
+                      await this.plugin.recreateParser();
+                      // Update KeywordManager in TaskWriter with new settings
+                      this.plugin.updateTaskWriterKeywordManager();
+                    }),
+                );
+            })
+            .addSetting((setting) => {
+              // Diagnostic helper: open the in-vault debug log in a new leaf,
+              // or copy its contents to the clipboard if it doesn't exist yet.
+              setting
+                .setName('Debug Log')
+                .setDesc(
+                  'Click "Open" to view TODOseq-debug.log in a new pane. Click "Copy" to copy the log contents to the clipboard.',
+                )
+                .addButton((button) =>
+                  button.setButtonText('Open').onClick(async () => {
+                    const path = 'TODOseq-debug.log';
+                    const adapter = this.plugin.app.vault.adapter;
+                    if (!(await adapter.exists(path))) {
+                      new Notice('TODOseq: no TODOseq-debug.log in vault root yet.');
+                      return;
+                    }
+                    const file = this.plugin.app.vault.getAbstractFileByPath(path);
+                    if (file) {
+                      await this.plugin.app.workspace.getLeaf().openFile(file as any);
+                    }
+                  }),
+                )
+                .addButton((button) =>
+                  button.setButtonText('Copy').onClick(async () => {
+                    const path = 'TODOseq-debug.log';
+                    const adapter = this.plugin.app.vault.adapter;
+                    if (!(await adapter.exists(path))) {
+                      new Notice('TODOseq: no TODOseq-debug.log in vault root yet.');
+                      return;
+                    }
+                    const content = await adapter.read(path);
+                    await navigator.clipboard.writeText(content);
+                    new Notice('TODOseq: debug log copied to clipboard.');
+                  }),
+                );
+            })
       .addSetting((setting) => {
         setting
           .setName(t('settings.display.language'))
