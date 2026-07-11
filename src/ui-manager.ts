@@ -377,9 +377,6 @@ export class UIManager {
 
     const currentLine = this.getLineForElement(keywordElement);
     if (currentLine !== null) {
-      // The cursor positioning is now handled by TaskEditor.applyLineUpdate
-      // which detects when the cursor is on the same line and positions it
-      // after the new keyword
       this.plugin.editorController.handleUpdateTaskStateAtLine(
         false,
         currentLine - 1,
@@ -520,12 +517,21 @@ export class UIManager {
    * Get the line number for a DOM element in the editor
    */
   public getLineForElement(element: HTMLElement): number | null {
-    // Find the closest line element if the element itself isn't one
-    const lineElement =
+    // Find the closest line element if the element itself isn't one.
+    // Mark-decoration DOM proxies in CodeMirror 6 sometimes don't sit
+    // inside a `.cm-line` ancestor in the way posAtDOM expects — fall
+    // back to walking the document to find the enclosing `.cm-line`.
+    let lineElement: HTMLElement | null = null;
+    if (
       element.classList.contains('cm-line') ||
       element.classList.contains('HyperMD-task-line')
-        ? element
-        : (element.closest('.cm-line, .HyperMD-task-line') as HTMLElement);
+    ) {
+      lineElement = element;
+    } else {
+      lineElement = element.closest(
+        '.cm-line, .HyperMD-task-line',
+      ) as HTMLElement | null;
+    }
 
     const targetElement = lineElement || element;
 
@@ -536,16 +542,82 @@ export class UIManager {
     }
 
     try {
-      // Use CodeMirror 6's posAtDOM to get the position of the element
-      const pos = editorView.posAtDOM(targetElement);
+      // Strategy 1: direct posAtDOM on the closest line.
+      let pos = editorView.posAtDOM(targetElement);
+      let lineNumber = pos > 0 ? editorView.state.doc.lineAt(pos).number : 0;
 
-      // Get the line number from the position
-      const lineNumber = editorView.state.doc.lineAt(pos).number;
+      // Strategy 2: posAtDOM on the actual clicked element (decoration
+      // proxy).
+      if (lineNumber === 0 && targetElement !== element) {
+        pos = editorView.posAtDOM(element);
+        lineNumber = pos > 0 ? editorView.state.doc.lineAt(pos).number : 0;
+      }
 
-      return lineNumber;
+      // Strategy 3: walk every cm-line in the editor and find which
+      // one is an ancestor of the clicked element. Last-resort fallback
+      // for stale decoration handles after re-render — slow but reliable.
+      if (lineNumber === 0) {
+        const editorContainer = editorView.dom;
+        const allLines = editorContainer.querySelectorAll('.cm-line');
+        for (let i = 0; i < allLines.length; i++) {
+          if (allLines[i].contains(element)) {
+            // We know which cm-line index it is. The CodeMirror
+            // document line numbers match the rendered cm-line order
+            // (no folding assumed — folded lines still render as cm-line
+            // entries in the gutter order matching the doc).
+            lineNumber = i + 1;
+            break;
+          }
+        }
+      }
+
+      if (lineNumber === 0) {
+        // All three strategies failed — write to vault so the user can
+        // see this without opening DevTools, and surface a Notice for
+        // immediate feedback.
+        this.logClickFailure(element, targetElement, editorView);
+      }
+
+      return lineNumber > 0 ? lineNumber : null;
     } catch (error) {
-      console.warn('Failed to get line number for element:', error);
+      console.warn('[TODOseq] posAtDOM failed:', error, {
+        targetTag: targetElement.tagName,
+        targetClass: targetElement.className,
+        closestCmLine: !!targetElement.closest('.cm-line'),
+      });
       return null;
+    }
+  }
+
+  /**
+   * Persist a click-resolution failure to `TODOseq-debug.log` in the vault
+   * root and surface a Notice. The user can see the log file directly in
+   * Obsidian's file tree — no DevTools needed.
+   */
+  private async logClickFailure(
+    element: HTMLElement,
+    targetElement: HTMLElement,
+    editorView: EditorView,
+  ): Promise<void> {
+    const snippet = element.outerHTML.slice(0, 240);
+    const path = 'TODOseq-debug.log';
+    const ts = new Date().toISOString();
+    const line =
+      `[${ts}] click resolution failed: keyword=${element.getAttribute(
+        'data-task-keyword',
+      )} ` +
+      `outerHTML=${snippet} ` +
+      `closestCmLine=${!!targetElement.closest('.cm-line')}\n`;
+    try {
+      const adapter = this.plugin.app.vault.adapter;
+      const fileExists = await adapter.exists(path);
+      const existing = fileExists ? await adapter.read(path) : '';
+      await adapter.write(path, existing + line);
+      new Notice(
+        'TODOseq: could not resolve click target. See TODOseq-debug.log in vault root.',
+      );
+    } catch (err) {
+      console.warn('[TODOseq] failed to persist click debug log:', err);
     }
   }
 
