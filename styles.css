@@ -210,6 +210,22 @@
     transparent
   );
 }
+.markdown-preview-view .task-list-item[data-task='/']
+  .task-list-item-checkbox {
+  background-color: color-mix(
+    in srgb,
+    var(--interactive-accent, #7f6df2) 33%,
+    transparent
+  );
+}
+.markdown-preview-view .task-list-item[data-task='-']
+  .task-list-item-checkbox {
+  background-color: color-mix(
+    in srgb,
+    var(--background-modifier-error, #e93147) 33%,
+    transparent
+  );
+}
 
 /* Embedded task list checkbox styling for active tasks */
 .todoseq-embedded-task-checkbox[data-task='/'] {
@@ -221,10 +237,8 @@
 }
 
 /* Editor live preview checkbox styling for active and cancelled tasks.
- * Obsidian renders markdown checkboxes as native <input type="checkbox">
- * elements inside .task-list-item <li> blocks. The <li> gets data-task
- * attribute set to the character ([/], [-], [x]) — not the <input>.
- * Selector targets the wrapper <li> to apply the background. */
+ * Target both the <li> wrapper and the actual <input> checkbox inside it.
+ * Obsidian 1.x sets data-task on both the <li> and the <input> element. */
 .markdown-source-view.is-live-preview
   .task-list-item[data-task='/'] {
   background-color: color-mix(
@@ -234,7 +248,25 @@
   );
 }
 .markdown-source-view.is-live-preview
+  .task-list-item[data-task='/']
+  .task-list-item-checkbox {
+  background-color: color-mix(
+    in srgb,
+    var(--interactive-accent, #7f6df2) 33%,
+    transparent
+  );
+}
+.markdown-source-view.is-live-preview
   .task-list-item[data-task='-'] {
+  background-color: color-mix(
+    in srgb,
+    var(--background-modifier-error, #e93147) 33%,
+    transparent
+  );
+}
+.markdown-source-view.is-live-preview
+  .task-list-item[data-task='-']
+  .task-list-item-checkbox {
   background-color: color-mix(
     in srgb,
     var(--background-modifier-error, #e93147) 33%,
