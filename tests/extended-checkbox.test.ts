@@ -65,3 +65,42 @@ describe('extended checkbox states', () => {
     expect(task.state).toBe('TODO');
   });
 });
+
+describe('isTaskLine fallback for HH:mm timestamps', () => {
+  function buildParser() {
+    // local import re-resolution
+    const { TaskParser } = require('../src/parser/task-parser');
+    const { KeywordManager } = require('../src/utils/keyword-manager');
+    const settings = {
+      useExtendedCheckboxStyles: true,
+      additionalInactiveKeywords: [],
+      additionalActiveKeywords: [],
+      additionalCompletedKeywords: [],
+      additionalWaitingKeywords: [],
+      additionalArchivedKeywords: [],
+      stateTransitions: {
+        defaultInactive: 'TODO',
+        defaultActive: 'DOING',
+        defaultCompleted: 'DONE',
+        transitionStatements: [],
+      },
+    };
+    const km = new KeywordManager(settings);
+    return TaskParser.create(km, null);
+  }
+
+  it('isTaskLine returns true for - [ ] HH:mm DOING task (was false in v0.20.1)', () => {
+    const parser = buildParser();
+    expect(parser.isTaskLine('- [ ] 12:46 DOING Wash hands.')).toBe(true);
+  });
+
+  it('isTaskLine returns true for - [/] HH:mm DOING task', () => {
+    const parser = buildParser();
+    expect(parser.isTaskLine('- [/] 12:46 DOING Wash hands.')).toBe(true);
+  });
+
+  it('isTaskLine returns false for // TODO comment line (strict regex still gates)', () => {
+    const parser = buildParser();
+    expect(parser.isTaskLine('// TODO ignored')).toBe(false);
+  });
+});

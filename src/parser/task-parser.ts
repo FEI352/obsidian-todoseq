@@ -529,7 +529,11 @@ export class TaskParser implements ITaskParser {
    * @returns true if line appears to be a task
    */
   public isTaskLine(line: string): boolean {
-    return this.testRegex.test(line);
+    // The strict testRegex rejects lines whose first non-checkbox token is not
+    // a keyword (e.g. "- [/] HH:mm DOING 吃早餐"). Fall back to the permissive
+    // captureCheckboxRegex so checkbox-prefixed lines with HH:mm-style
+    // timestamp prefixes are still recognised as tasks.
+    return this.testRegex.test(line) || this.captureCheckboxRegex.test(line);
   }
 
   /**
