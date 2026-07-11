@@ -198,10 +198,19 @@ export class EditorController {
     // Get the line from the editor
     const line = editor.getLine(lineNumber);
 
-    // Check if this line contains a valid task using VaultScanner's parser
+    // Check if this line contains a valid task using VaultScanner's parser.
+    // isTaskLine() OR-falls-back to captureCheckboxRegex so HH:mm-prefixed
+    // checkbox tasks like "[ ] 12:23 TODO 666" pass the gate. The old
+    // testRegex.test() alone rejects them because the strict regex requires
+    // the keyword to immediately follow the checkbox.
     const parser = vaultScanner.getParser();
+    const matchesTask =
+      parser &&
+      (typeof parser.isTaskLine === 'function'
+        ? parser.isTaskLine(line)
+        : parser.testRegex.test(line));
 
-    if (!parser?.testRegex.test(line)) {
+    if (!matchesTask) {
       // Try footnote regex specifically
       const footnoteRegex =
         /\[\^\d+\]:\s+(TODO|DOING|LATER|DONE|CANCELED|CANCELLED|WAIT|WAITING|NOW|IN-PROGRESS)\s+/;
