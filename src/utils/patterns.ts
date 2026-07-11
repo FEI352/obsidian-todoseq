@@ -60,7 +60,7 @@ export const CHECKBOX_PATTERN_SOURCE = CHECKBOX_PATTERN.source;
  * 5: Rest of the text (optional)
  */
 export const CHECKBOX_REGEX =
-  /^(\s*)([-*+]\s*\[(\s|x)\])\s+([^\s]+)(?:\s+(.+))?$/;
+  /^(\s*)([-*+]\s*\[([ xX\-/])\])\s+([^\s]+)(?:\s+(.+))?$/;
 
 /**
  * Simple checkbox detection regex (without capture groups for state)

@@ -35,7 +35,7 @@ import {
   stripMarkdownPrefixes,
 } from '../utils/patterns';
 
-type RegexPair = { test: RegExp; capture: RegExp };
+type RegexPair = { test: RegExp; capture: RegExp; captureCheckbox: RegExp };
 
 /**
  * Markdown task parser for TODOseq.
@@ -62,6 +62,7 @@ export class TaskParser implements ITaskParser {
   // Public access to regex patterns for editor commands
   public readonly testRegex: RegExp;
   public readonly captureRegex: RegExp;
+  public readonly captureCheckboxRegex: RegExp;
 
   // Language support components (lazy-loaded)
   private languageRegistry: LanguageRegistry | null = null;
@@ -90,6 +91,7 @@ export class TaskParser implements ITaskParser {
 
     this.testRegex = regex.test;
     this.captureRegex = regex.capture;
+    this.captureCheckboxRegex = regex.captureCheckbox;
 
     this.includeCalloutBlocks = includeCalloutBlocks;
     this.includeCodeBlocks = includeCodeBlocks;
@@ -210,9 +212,15 @@ export class TaskParser implements ITaskParser {
    * @param keywords Array of task keywords
    * @returns RegexPair for testing and capturing tasks
    */
-  private static buildRegex(keywords: string[]): RegexPair {
+  private static buildRegex(keywords: string[]): {
+    test: RegExp;
+    capture: RegExp;
+    captureCheckbox: RegExp;
+  } {
     const escaped_keywords = TaskParser.escapeKeywords(keywords);
 
+    // The default (strict) regex matches the original format so existing task
+    // detection logic (e.g. "// TODO ignored task" rejection) keeps working.
     const test = new RegExp(
       `^(${STANDARD_PREFIX_SOURCE}|${QUOTED_PREFIX_SOURCE}|${CALLOUT_PREFIX_SOURCE})?` +
         `(${BULLET_LIST_PATTERN_SOURCE}|${NUMBERED_LIST_PATTERN_SOURCE}|${LETTER_LIST_PATTERN_SOURCE}|${CUSTOM_LIST_PATTERN_SOURCE})??` +
@@ -221,7 +229,22 @@ export class TaskParser implements ITaskParser {
         `(${TASK_TEXT_SOURCE})?$`,
     );
     const capture = test;
-    return { test, capture };
+
+    // For lines that start with a checkbox, additionally tolerates one or more
+    // non-keyword tokens (e.g. "HH:mm" timestamp) before the keyword, so
+    // "- [/] HH:mm DOING 吃早餐" is recognised while comment lines like
+    // "// TODO ignored" (which have no checkbox) still get rejected.
+    // Capture groups mirror the main regex (m[1..m[6]).
+    const captureCheckbox = new RegExp(
+      `^(${STANDARD_PREFIX_SOURCE}|${QUOTED_PREFIX_SOURCE}|${CALLOUT_PREFIX_SOURCE})?` +
+        `(${BULLET_LIST_PATTERN_SOURCE}|${NUMBERED_LIST_PATTERN_SOURCE}|${LETTER_LIST_PATTERN_SOURCE}|${CUSTOM_LIST_PATTERN_SOURCE})??` +
+        `(${CHECKBOX_PATTERN_SOURCE})` +
+        `(?:\\S+\\s+)*?` +
+        `(${escaped_keywords})\\s+` +
+        `(${TASK_TEXT_SOURCE})?$`,
+    );
+
+    return { test, capture, captureCheckbox };
   }
 
   /**
@@ -257,7 +280,7 @@ export class TaskParser implements ITaskParser {
         `(${TASK_TEXT_SOURCE})$`,
     );
     const capture = test;
-    return { test, capture };
+    return { test, capture, captureCheckbox: capture };
   }
 
   /**
@@ -294,7 +317,7 @@ export class TaskParser implements ITaskParser {
         `(${endComment})?$`,
     );
     const capture = test;
-    return { test, capture };
+    return { test, capture, captureCheckbox: capture };
   }
 
   /**
@@ -541,6 +564,8 @@ export class TaskParser implements ITaskParser {
     const regex = TaskParser.buildRegex(this.allKeywords);
     (this as { testRegex: RegExp }).testRegex = regex.test;
     (this as { captureRegex: RegExp }).captureRegex = regex.capture;
+    (this as { captureCheckboxRegex: RegExp }).captureCheckboxRegex =
+      regex.captureCheckbox;
 
     this.urgencyCoefficients = config.urgencyCoefficients;
 
@@ -623,8 +648,28 @@ export class TaskParser implements ITaskParser {
         checkboxStatus,
         checkboxState /*checkboxText*/,
       ] = checkboxMatch;
-      finalState = checkboxState;
-      finalCompleted = checkboxStatus === 'x';
+      // Only override state with checkboxState when it's an actual keyword.
+      // Otherwise (e.g. "- [/] HH:mm DOING 吃早餐") checkboxState is the HH:mm
+      // timestamp prefix and we want to keep the keyword resolved earlier.
+      if (
+        checkboxState &&
+        this.keywordManager.isKnownKeyword(checkboxState)
+      ) {
+        finalState = checkboxState;
+      }
+      // Completion: [x] / [X] = done; [/] = in progress (still active); [-] = canceled.
+      if (checkboxStatus === 'x' || checkboxStatus === 'X') {
+        finalCompleted = true;
+      } else if (checkboxStatus === '/') {
+        finalCompleted = false;
+      } else if (checkboxStatus === '-') {
+        finalCompleted = false;
+      } else if (checkboxStatus === ' ') {
+        finalCompleted = false;
+      } else {
+        // Unknown checkbox status: fall back to keyword manager.
+        finalCompleted = this.keywordManager.isCompleted(finalState);
+      }
       // Update listMarker to preserve the original checkbox format, but trim trailing spaces
       finalListMarker = checkboxListMarker.trimEnd();
     }
@@ -1830,8 +1875,12 @@ export class TaskParser implements ITaskParser {
     lineNumber: number,
     filePath: string,
   ): Task | null {
-    // Check if line matches task regex
-    if (!this.testRegex.test(line)) {
+    // Check if line matches task regex. The strict testRegex rejects lines
+    // whose first non-checkbox token is not a keyword (e.g.
+    // "- [/] HH:mm DOING 吃早餐"), so also try the more permissive
+    // captureCheckboxRegex which tolerates non-keyword tokens (e.g. "HH:mm")
+    // between the checkbox and the keyword.
+    if (!this.testRegex.test(line) && !this.captureCheckboxRegex.test(line)) {
       // Check if it's a footnote task
       const footnoteRegex = TaskParser.buildFootnoteRegex(this.allKeywords);
       if (!footnoteRegex.test.test(line)) {
@@ -1883,10 +1932,31 @@ export class TaskParser implements ITaskParser {
       return task;
     }
 
-    const match = this.captureRegex.exec(line);
+    // Try the strict capture regex first; fall back to the permissive checkbox
+    // variant when the line starts with a checkbox but has non-keyword tokens
+    // (e.g. "HH:mm" timestamp) before the keyword.
+    let match = this.captureRegex.exec(line);
+    if (!match && CHECKBOX_DETECTION_REGEX.test(line)) {
+      match = this.captureCheckboxRegex.exec(line);
+    }
     if (!match) {
       return null;
     }
+
+    return this.parseFromCapture(line, lineNumber, filePath, match);
+  }
+
+  /**
+   * Build a Task object from a captured regex match. The capture group order
+   * is identical for both captureRegex and captureCheckboxRegex (m[1..m[6]),
+   * so this method is shared by both.
+   */
+  private parseFromCapture(
+    line: string,
+    lineNumber: number,
+    filePath: string,
+    match: RegExpExecArray,
+  ): Task | null {
 
     // Extract task details
     // m[0] is the full match
@@ -1914,7 +1984,8 @@ export class TaskParser implements ITaskParser {
     const checkboxMatch = CHECKBOX_REGEX.exec(line);
     if (checkboxMatch) {
       const [, , , checkboxStatus] = checkboxMatch;
-      completed = checkboxStatus === 'x';
+      // [x] / [X] = done; [ ] / [/] / [-] = not done
+      completed = checkboxStatus === 'x' || checkboxStatus === 'X';
     } else {
       // Use the keywordManager for determining completion status
       completed = this.keywordManager.isCompleted(state);

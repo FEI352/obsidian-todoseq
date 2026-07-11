@@ -118,6 +118,10 @@ export class Workspace {
 
 export const Platform = { isMobile: false };
 
+export const moment = {
+  locale: (): string => 'en',
+};
+
 export class Notice {
   constructor(message: string, timeout?: number) {
     const instances = (Notice as any).instances as

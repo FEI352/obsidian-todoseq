@@ -133,7 +133,6 @@ describe('patterns', () => {
     });
 
     test('should not match invalid checkbox patterns', () => {
-      expect(CHECKBOX_REGEX.test('- [X] task')).toBe(false); // uppercase X
       expect(CHECKBOX_REGEX.test('- [] task')).toBe(false); // no space inside
       expect(CHECKBOX_REGEX.test('[] task')).toBe(false); // no list marker
     });
@@ -141,6 +140,30 @@ describe('patterns', () => {
     test('should match single word after checkbox', () => {
       expect(CHECKBOX_REGEX.test('- [ ] task')).toBe(true); // single word (keyword)
       expect(CHECKBOX_REGEX.test('- [x] single')).toBe(true); // single word (keyword)
+    });
+
+    test('should match extended checkbox states (X / -)', () => {
+      // uppercase X is equivalent to lowercase x (completed)
+      expect(CHECKBOX_REGEX.test('- [X] task')).toBe(true);
+      // in-progress [/] (TODO/DOING pattern)
+      expect(CHECKBOX_REGEX.test('- [/] task')).toBe(true);
+      expect(CHECKBOX_REGEX.test('- [/] HH:mm DOING 吃早餐')).toBe(true);
+      // canceled / dropped [-]
+      expect(CHECKBOX_REGEX.test('- [-] task')).toBe(true);
+    });
+
+    test('should capture extended checkbox status correctly', () => {
+      const inProgressMatch = CHECKBOX_REGEX.exec('- [/] HH:mm DOING 吃早餐');
+      expect(inProgressMatch?.[3]).toBe('/');
+      expect(inProgressMatch?.[4]).toBe('HH:mm');
+      expect(inProgressMatch?.[5]).toBe('DOING 吃早餐');
+
+      const upperMatch = CHECKBOX_REGEX.exec('- [X] DOING something');
+      expect(upperMatch?.[3]).toBe('X');
+      expect(upperMatch?.[4]).toBe('DOING');
+
+      const canceledMatch = CHECKBOX_REGEX.exec('- [-] task text');
+      expect(canceledMatch?.[3]).toBe('-');
     });
   });
 
