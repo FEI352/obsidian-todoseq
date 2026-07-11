@@ -971,8 +971,13 @@ export class TaskUpdateCoordinator {
       return;
     }
 
-    // Use requestAnimationFrame to wait for Obsidian's re-render to complete
+    // Use double requestAnimationFrame to ensure Obsidian's native CM6
+    // task-list re-render has completed before we overwrite data-task.
+    // A single rAF races with Obsidian's own post-transaction rendering:
+    // if Obsidian fires AFTER us, it resets data-task to ' ' (unchecked)
+    // and our change is lost. The second rAF guarantees we run after.
     window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
       try {
         // Find the line element by line number
         const linePos = editorView.state.doc.line(task.line + 1); // Convert to 1-indexed
@@ -1016,7 +1021,8 @@ export class TaskUpdateCoordinator {
         // Silently fail if we can't find or update the checkbox
         // This is a visual enhancement, not critical functionality
       }
-    });
+      }); // inner rAF
+    }); // outer rAF
   }
 
   /**
