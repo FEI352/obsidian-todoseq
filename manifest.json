@@ -1,7 +1,7 @@
 {
 	"id": "todoseq",
 	"name": "TODOseq",
-	"version": "0.20.10",
+	"version": "0.20.11",
 	"minAppVersion": "1.11.0",
 	"description": "Lightweight keyword-based task tracker using Logseq style keywords.",
 	"author": "Jau Puihing & Stephen Cross",
