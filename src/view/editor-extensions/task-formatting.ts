@@ -629,7 +629,7 @@ export class TaskKeywordDecorator {
 
     // Check if this line contains SCHEDULED:, DEADLINE:, CLOSED:, or DESCRIPTION:
     const trimmedLine = lineText.trim();
-    let dateLineType: 'scheduled' | 'deadline' | 'closed' | null = null;
+    let dateLineType: 'scheduled' | 'deadline' | 'closed' | 'started' | null = null;
     let isDescriptionLine = false;
 
     // Handle callout blocks (lines starting with >)
@@ -641,6 +641,8 @@ export class TaskKeywordDecorator {
         dateLineType = 'deadline';
       } else if (contentAfterArrow.startsWith('CLOSED:')) {
         dateLineType = 'closed';
+      } else if (contentAfterArrow.startsWith('STARTED:')) {
+        dateLineType = 'started';
       } else if (contentAfterArrow.startsWith('DESCRIPTION:')) {
         isDescriptionLine = true;
       }
@@ -650,6 +652,8 @@ export class TaskKeywordDecorator {
       dateLineType = 'deadline';
     } else if (trimmedLine.startsWith('CLOSED:')) {
       dateLineType = 'closed';
+    } else if (trimmedLine.startsWith('STARTED:')) {
+      dateLineType = 'started';
     } else if (trimmedLine.startsWith('DESCRIPTION:')) {
       isDescriptionLine = true;
     }
@@ -676,13 +680,17 @@ export class TaskKeywordDecorator {
             ? 'todoseq-scheduled-line'
             : dateLineType === 'deadline'
               ? 'todoseq-deadline-line'
-              : 'todoseq-closed-line';
+              : dateLineType === 'closed'
+                ? 'todoseq-closed-line'
+                : 'todoseq-started-line';
         const keywordClass =
           dateLineType === 'scheduled'
             ? 'todoseq-scheduled-keyword'
             : dateLineType === 'deadline'
               ? 'todoseq-deadline-keyword'
-              : 'todoseq-closed-keyword';
+              : dateLineType === 'closed'
+                ? 'todoseq-closed-keyword'
+                : 'todoseq-started-keyword';
 
         // Apply decoration to the entire line
         builder.add(
@@ -704,7 +712,9 @@ export class TaskKeywordDecorator {
             ? 'SCHEDULED:'
             : dateLineType === 'deadline'
               ? 'DEADLINE:'
-              : 'CLOSED:';
+              : dateLineType === 'closed'
+                ? 'CLOSED:'
+                : 'STARTED:';
         const keywordStart = trimmedLine.indexOf(keyword);
         // const keywordEnd = keywordStart + keyword.length;
         const keywordStartPos =
