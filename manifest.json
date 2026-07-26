@@ -5,5 +5,6 @@
 	"description": "Lightweight keyword-based task tracker using Logseq style keywords.",
 	"author": "Jau Puihing & Stephen Cross",
 	"authorUrl": "https://github.com/FEI352/obsidian-todoseq",
-	"isDesktopOnly": false
+	"isDesktopOnly": false,
+	"version": "0.20.14"
 }
