@@ -65,6 +65,8 @@ function loadZh(): Record<string, string> {
         'settings.general.default-completed-desc': '完成任务时使用的关键词（如 DONE）。',
         'settings.general.track-closed': '记录完成时间',
         'settings.general.track-closed-desc': '任务完成时添加 closed: 时间戳。',
+        'settings.general.track-started': '记录开始时间',
+        'settings.general.track-started-desc': '任务标记为进行中时添加 started: 时间戳。',
         'settings.general.state-transitions': '状态转换',
         'settings.general.state-transitions-desc': '每行一个转换规则。格式：关键词A -> 关键词B。使用 | 分隔多个目标。',
         'settings.general.week-start': '每周起始日',

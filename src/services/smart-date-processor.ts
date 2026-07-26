@@ -334,7 +334,8 @@ export class SmartDateProcessor {
     }
     return (
       /^\s*(SCHEDULED|DEADLINE):\s*[<[]/.test(lineText) ||
-      /^\s*CLOSED:\s*\[/.test(lineText)
+      /^\s*CLOSED:\s*\[/.test(lineText) ||
+      /^\s*STARTED:\s*\[/.test(lineText)
     );
   }
 

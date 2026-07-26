@@ -42,7 +42,7 @@ export function getIndentLength(indent: string): number {
 export function findDateLine(
   lines: string[],
   startIndex: number,
-  dateType: 'SCHEDULED' | 'DEADLINE' | 'CLOSED',
+  dateType: 'SCHEDULED' | 'DEADLINE' | 'CLOSED' | 'STARTED',
   taskIndent: string,
   keywordManager: KeywordManager,
 ): number {
@@ -130,14 +130,14 @@ function isTaskLine(line: string, keywordManager: KeywordManager): boolean {
 export function findDateLineWithParser(
   lines: string[],
   startIndex: number,
-  dateType: 'SCHEDULED' | 'DEADLINE' | 'CLOSED',
+  dateType: 'SCHEDULED' | 'DEADLINE' | 'CLOSED' | 'STARTED',
   taskIndent: string,
   parser:
     | {
         getDateLineType: (
           line: string,
           indent: string,
-        ) => 'scheduled' | 'deadline' | 'closed' | null;
+        ) => 'scheduled' | 'deadline' | 'closed' | 'started' | null;
       }
     | null
     | undefined,

@@ -694,6 +694,19 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
                 await this.plugin.saveSettings();
               }),
           );
+      })
+      .addSetting((setting) => {
+        setting
+          .setName(t('settings.general.track-started'))
+          .setDesc(t('settings.general.track-started-desc'))
+          .addToggle((toggle) =>
+            toggle
+              .setValue(this.plugin.settings.trackStartedDate)
+              .onChange(async (value) => {
+                this.plugin.settings.trackStartedDate = value;
+                await this.plugin.saveSettings();
+              }),
+          );
       });
 
     // Initial validation

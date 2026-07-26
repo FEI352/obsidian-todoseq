@@ -61,6 +61,7 @@ export interface TodoTrackerSettings {
   stateTransitions: StateTransitionSettings;
   // Task completion settings
   trackClosedDate: boolean; // when true, adds CLOSED: timestamp when tasks are marked as completed
+  trackStartedDate: boolean; // when true, adds STARTED: timestamp when tasks are marked as DOING/in-progress
   // Experimental features
   useExtendedCheckboxStyles: boolean; // when true, uses themed markdown checkbox styles ([/], [-]) for active and cancelled tasks
   language: 'zh' | 'en'; // Hermes fork: UI language
@@ -132,6 +133,7 @@ export const DefaultSettings: TodoTrackerSettings = {
   migrateToTodayState: '', // Default state to set on source task after migrating (empty = disabled)
   stateTransitions: DefaultStateTransitionSettings,
   trackClosedDate: false, // Disabled by default
+  trackStartedDate: false, // Disabled by default
   useExtendedCheckboxStyles: true, // Hermes fork: enable [/] and [-] by default
   language: 'zh', // Hermes fork: default to Chinese UI
   // Smart date recognition settings

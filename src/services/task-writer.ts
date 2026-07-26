@@ -14,7 +14,7 @@ import TodoTracker from '../main';
 import { getStateTransitionManager } from './task-update-coordinator';
 
 /** A SCHEDULED/DEADLINE/CLOSED date line kind. */
-type DateLineType = 'SCHEDULED' | 'DEADLINE' | 'CLOSED';
+type DateLineType = 'SCHEDULED' | 'DEADLINE' | 'CLOSED' | 'STARTED';
 
 export interface DateLineUpdateResult {
   task: Task;
@@ -256,6 +256,9 @@ export class TaskWriter {
       this.keywordManager,
     );
 
+    // Check if the new state is an active/in-progress keyword (DOING, NOW, etc.)
+    const isActiveState = newState !== '' && this.keywordManager?.isActive(newState);
+
     // Check if target is the active file in a MarkdownView
     // Using getActiveViewOfType() is safer than accessing workspace.activeLeaf directly
     const md = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -314,6 +317,10 @@ export class TaskWriter {
             ? DateUtils.formatClosedDate(new Date())
             : null;
         const shouldRemoveClosed = !completed && task.closedDate;
+        const startedDateStr =
+          isActiveState && settings?.trackStartedDate && !task.startedDate
+            ? DateUtils.formatClosedDate(new Date())
+            : null;
 
         await this.app.vault.process(file, (data) => {
           const lines = data.split('\n');
@@ -334,6 +341,17 @@ export class TaskWriter {
             this.removeDateLine(lines, task.line, 'CLOSED', task);
           }
 
+          // Handle STARTED date atomically
+          if (startedDateStr !== null) {
+            this.updateOrInsertDateLine(
+              lines,
+              task.line,
+              'STARTED',
+              startedDateStr,
+              task,
+            );
+          }
+
           return lines.join('\n');
         });
       }
@@ -345,6 +363,7 @@ export class TaskWriter {
     // Calculate line delta: +1 if new line inserted, -1 if removed, 0 if updated or no change
     let lineDelta = 0;
     let updatedClosedDate = task.closedDate;
+    let updatedStartedDate = task.startedDate;
     if (isSourceMode && !forceVaultApi) {
       if (completed && settings?.trackClosedDate) {
         const closedResult = await this.updateTaskClosedDate(
@@ -359,6 +378,16 @@ export class TaskWriter {
         lineDelta += closedResult.lineDelta;
         updatedClosedDate = closedResult.task.closedDate;
       }
+      // Source mode: handle STARTED date via Editor API
+      if (isActiveState && settings?.trackStartedDate && !task.startedDate) {
+        const startedResult = await this.updateTaskStartedDate(
+          task,
+          new Date(),
+          false,
+        );
+        lineDelta += startedResult.lineDelta;
+        updatedStartedDate = startedResult.task.startedDate;
+      }
     } else if (!isSourceMode || forceVaultApi) {
       // For non-source mode, CLOSED date was handled atomically above
       if (completed && settings?.trackClosedDate) {
@@ -367,6 +396,11 @@ export class TaskWriter {
       } else if (!completed && task.closedDate) {
         lineDelta = -1;
         updatedClosedDate = null;
+      }
+      // Non-source: STARTED was handled atomically above
+      if (isActiveState && settings?.trackStartedDate && !task.startedDate) {
+        lineDelta += task.startedDate ? 0 : 1;
+        updatedStartedDate = new Date();
       }
     }
 
@@ -378,6 +412,7 @@ export class TaskWriter {
       state: newState,
       completed,
       closedDate: updatedClosedDate,
+      startedDate: updatedStartedDate,
     };
     if (lineDelta !== 0) {
       result.lineDelta = lineDelta;
@@ -978,6 +1013,74 @@ export class TaskWriter {
         ...task,
         closedDate: null,
       },
+      lineDelta,
+    };
+  }
+
+  /**
+   * Adds a STARTED date line below the task when it transitions to an active state.
+   * Only writes if no STARTED line exists yet (one per task).
+   * Returns the updated task with lineDelta.
+   */
+  async updateTaskStartedDate(
+    task: Task,
+    startedDate: Date,
+    forceVaultApi = false,
+  ): Promise<DateLineUpdateResult> {
+    const dateStr = DateUtils.formatClosedDate(startedDate);
+    let lineDelta = 0;
+
+    const file = this.app.vault.getAbstractFileByPath(task.path);
+    if (file && file instanceof TFile) {
+      const md = this.app.workspace.getActiveViewOfType(MarkdownView);
+      const isActive = !forceVaultApi && md?.file?.path === task.path;
+      const editor = md?.editor;
+
+      if (isActive && editor) {
+        // Editor API path
+        const lines = Array.from({ length: editor.lineCount() }, (_, i) =>
+          editor.getLine(i),
+        );
+        const taskIndent = getTaskIndent(task);
+
+        // Only insert if no existing STARTED line
+        const existingIdx = findDateLine(
+          lines,
+          task.line + 1,
+          'STARTED',
+          taskIndent,
+          this.keywordManager,
+        );
+        if (existingIdx < 0) {
+          const insertIndex = this.calcDateLineInsertIndex(
+            lines,
+            task.line,
+            'STARTED',
+            taskIndent,
+          );
+          const startedIndent = this.getEffectiveDateLineIndent(
+            lines, -1, task,
+          );
+          const from: EditorPosition = { line: insertIndex, ch: 0 };
+          const to: EditorPosition = { line: insertIndex, ch: 0 };
+          editor.replaceRange(`${startedIndent}STARTED: ${dateStr}\n`, from, to);
+          lineDelta = 1;
+        }
+      } else {
+        // Vault API path
+        await this.app.vault.process(file, (data) => {
+          const lines = data.split('\n');
+          const result = this.updateOrInsertDateLine(
+            lines, task.line, 'STARTED', dateStr, task,
+          );
+          lineDelta = result.lineDelta;
+          return lines.join('\n');
+        });
+      }
+    }
+
+    return {
+      task: { ...task, startedDate },
       lineDelta,
     };
   }
