@@ -140,7 +140,7 @@ export const ORG_PROPERTIES_END = /^\s*:END:\s*$/;
  * Used to identify completed task timestamps.
  */
 export const ORG_CLOSED_PATTERN =
-  /^\s+CLOSED:\s*\[\d{4}-\d{2}-\d{2}(?:\s+\w+)?(?:\s+\d{2}:\d{2})?\]/;
+  /^\s+CLOSED:\s*\[\d{4}-\d{2}-\d{2}(?:\s+\w+)?(?:\s+\d{2}:\d{2}(?::\d{2})?)?\]/;
 
 /**
  * STARTED timestamp pattern.
@@ -148,7 +148,7 @@ export const ORG_CLOSED_PATTERN =
  * Used to identify in-progress task timestamps.
  */
 export const ORG_STARTED_PATTERN =
-  /^\s+STARTED:\s*\[\d{4}-\d{2}-\d{2}(?:\s+\w+)?(?:\s+\d{2}:\d{2})?\]/;
+  /^\s+STARTED:\s*\[\d{4}-\d{2}-\d{2}(?:\s+\w+)?(?:\s+\d{2}:\d{2}(?::\d{2})?)?\]/;
 
 // ============================================================================
 // File Directive Pattern
