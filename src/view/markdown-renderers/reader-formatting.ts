@@ -400,7 +400,7 @@ export class ReaderViewFormatter {
     // Remove date lines from taskText (CLOSED, SCHEDULED, DEADLINE lines)
     // These are rendered on separate lines in the preview but are NOT part of the actual task line
     normalizedTaskText = normalizedTaskText
-      .replace(/\s*CLOSED:.*$/im, '')
+      .replace(/\s*(CLOSED|STARTED):.*$/im, '')
       .replace(/\s*SCHEDULED:.*$/im, '')
       .replace(/\s*DEADLINE:.*$/im, '')
       .trim();
@@ -1798,7 +1798,8 @@ export class ReaderViewFormatter {
       if (
         !text.includes('SCHEDULED:') &&
         !text.includes('DEADLINE:') &&
-        !text.includes('CLOSED:')
+        !text.includes('CLOSED:') &&
+        !text.includes('STARTED:')
       ) {
         return;
       }
@@ -1831,7 +1832,8 @@ export class ReaderViewFormatter {
       if (
         !text.includes('SCHEDULED:') &&
         !text.includes('DEADLINE:') &&
-        !text.includes('CLOSED:')
+        !text.includes('CLOSED:') &&
+        !text.includes('STARTED:')
       ) {
         return;
       }
@@ -2132,6 +2134,7 @@ export class ReaderViewFormatter {
       { keyword: 'SCHEDULED:', type: 'scheduled' as const },
       { keyword: 'DEADLINE:', type: 'deadline' as const },
       { keyword: 'CLOSED:', type: 'closed' as const },
+      { keyword: 'STARTED:', type: 'started' as const },
     ];
 
     const text = paragraph.textContent || '';
@@ -2183,6 +2186,7 @@ export class ReaderViewFormatter {
       { keyword: 'SCHEDULED:', type: 'scheduled' as const },
       { keyword: 'DEADLINE:', type: 'deadline' as const },
       { keyword: 'CLOSED:', type: 'closed' as const },
+      { keyword: 'STARTED:', type: 'started' as const },
     ];
 
     const text = element.textContent || '';
@@ -2232,7 +2236,7 @@ export class ReaderViewFormatter {
     keywordNode: Text,
     keywordIndex: number,
     keyword: string,
-    type: 'scheduled' | 'deadline' | 'closed',
+    type: 'scheduled' | 'deadline' | 'closed' | 'started',
   ): void {
     // Split the text node into before, keyword, and after parts
     const nodeText = keywordNode.textContent || '';
