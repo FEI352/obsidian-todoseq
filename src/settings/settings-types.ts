@@ -132,8 +132,8 @@ export const DefaultSettings: TodoTrackerSettings = {
   scanCodeFiles: false, // Experimental feature - disabled by default
   migrateToTodayState: '', // Default state to set on source task after migrating (empty = disabled)
   stateTransitions: DefaultStateTransitionSettings,
-  trackClosedDate: false, // Disabled by default
-  trackStartedDate: false, // Disabled by default
+  trackClosedDate: true, // Hermes fork: track CLOSED timestamp by default
+  trackStartedDate: true, // Hermes fork: track STARTED timestamp by default
   useExtendedCheckboxStyles: true, // Hermes fork: enable [/] and [-] by default
   language: 'zh', // Hermes fork: default to Chinese UI
   // Smart date recognition settings

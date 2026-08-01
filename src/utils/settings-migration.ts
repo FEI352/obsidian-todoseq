@@ -67,6 +67,18 @@ const MIGRATIONS: SettingsMigrations[] = [
       return { ...settings };
     },
   },
+  {
+    version: 6,
+    migrate: (settings: Record<string, unknown>) => {
+      // v6: track STARTED/CLOSED timestamps by default (Hermes fork, user-mandated 2026-08-02)
+      // Override whatever the old value was — the user wants timestamp tracking on by default.
+      return {
+        ...settings,
+        trackStartedDate: true,
+        trackClosedDate: true,
+      };
+    },
+  },
 ];
 
 export function migrateSettings(
