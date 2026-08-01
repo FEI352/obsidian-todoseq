@@ -350,6 +350,8 @@ export class TaskWriter {
               startedDateStr,
               task,
             );
+            // Sync the reserved leading HH:mm slot with the actual started time
+            this.syncTaskLineStartedTime(lines, task, new Date());
           }
 
           return lines.join('\n');
@@ -810,6 +812,66 @@ export class TaskWriter {
   }
 
   /**
+   * Sync the task line's leading HH:mm slot with the actual started time.
+   *
+   * Tasks carry a reserved HH:mm prefix (e.g. `- [/] 00:31 DOING Brush teeth-1`)
+   * that was scheduled ahead of time. When the task is actually marked DOING
+   * and a STARTED: timestamp is written, this reserved time no longer reflects
+   * reality — so we overwrite the leading HH:mm with the started time.
+   *
+   * Only touches the leading time slot (checkbox → HH:mm → keyword). Lines
+   * without a leading HH:mm are left untouched.
+   */
+  private syncTaskLineStartedTime(
+    lines: string[],
+    task: Task,
+    startedDate: Date,
+  ): void {
+    if (task.line < 0 || task.line >= lines.length) {
+      return;
+    }
+    const line = lines[task.line];
+    const hh = String(startedDate.getHours()).padStart(2, '0');
+    const mm = String(startedDate.getMinutes()).padStart(2, '0');
+    const hhmm = `${hh}:${mm}`;
+    // Match "- [/] 00:31 DOING ..." (checkbox + leading HH:mm + rest)
+    const m = line.match(
+      /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\d{1,2}:\d{2})(\s.*)$/,
+    );
+    if (!m) {
+      return; // no leading time slot — leave unchanged
+    }
+    lines[task.line] = `${m[1]}${hhmm}${m[3]}`;
+  }
+
+  /**
+   * Sync the task line's leading HH:mm slot with the actual started time
+   * via the Editor API (source mode path).
+   */
+  private syncTaskLineStartedTimeInEditor(
+    editor: Editor,
+    task: Task,
+    startedDate: Date,
+  ): void {
+    const line = editor.getLine(task.line);
+    if (typeof line !== 'string') {
+      return;
+    }
+    const hh = String(startedDate.getHours()).padStart(2, '0');
+    const mm = String(startedDate.getMinutes()).padStart(2, '0');
+    const hhmm = `${hh}:${mm}`;
+    const m = line.match(
+      /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\d{1,2}:\d{2})(\s.*)$/,
+    );
+    if (!m) {
+      return;
+    }
+    const from: EditorPosition = { line: task.line, ch: 0 };
+    const to: EditorPosition = { line: task.line, ch: line.length };
+    editor.replaceRange(`${m[1]}${hhmm}${m[3]}`, from, to);
+  }
+
+  /**
    * Helper: write a single line replacement to the file, using Editor API
    * for active files or Vault.process for background files.
    */
@@ -1066,6 +1128,8 @@ export class TaskWriter {
           editor.replaceRange(`${startedIndent}STARTED: ${dateStr}\n`, from, to);
           lineDelta = 1;
         }
+        // Sync the reserved leading HH:mm slot with the actual started time
+        this.syncTaskLineStartedTimeInEditor(editor, task, startedDate);
       } else {
         // Vault API path
         await this.app.vault.process(file, (data) => {
@@ -1074,6 +1138,8 @@ export class TaskWriter {
             lines, task.line, 'STARTED', dateStr, task,
           );
           lineDelta = result.lineDelta;
+          // Sync the reserved leading HH:mm slot with the actual started time
+          this.syncTaskLineStartedTime(lines, task, startedDate);
           return lines.join('\n');
         });
       }
