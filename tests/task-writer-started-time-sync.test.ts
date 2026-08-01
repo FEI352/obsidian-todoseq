@@ -217,14 +217,17 @@ describe('TaskWriter — STARTED time syncs leading HH:mm', () => {
     expect(outputLines[0]).not.toMatch(/\[\/\] \d{2}:\d{2} DOING/);
   });
 
-  it('completed task (DONE) does NOT touch the leading time (only STARTED does)', async () => {
+  it('DONE keeps the STARTED time, not the old reserved placeholder (regression: DOING→DONE reverted time)', async () => {
     mockNow(6, 15, 4);
+    // Simulate the bug scenario: task was DOING'd at 06:15 (STARTED written),
+    // but the parsed rawText still carries the old reserved placeholder 05:35
+    // (e.g. stale task snapshot). Completing it must keep 06:15, not revert.
     const { mockEditor } = setupEditorMock(mockApp, [
-      '- [/] 06:15 DOING Brush teeth-1 <sup>3 min</sup>',
+      '- [/] 05:35 DOING 吃两粒钙片 <sup>1 min</sup>',
       '  STARTED: [2026-08-02 Sun 06:15:04]',
     ]);
     const task: Task = createBaseTask({
-      rawText: '- [/] 06:15 DOING Brush teeth-1 <sup>3 min</sup>',
+      rawText: '- [/] 05:35 DOING 吃两粒钙片 <sup>1 min</sup>',
       state: 'DOING',
       completed: false,
     });
@@ -236,10 +239,11 @@ describe('TaskWriter — STARTED time syncs leading HH:mm', () => {
       (c: any[]) => c[0],
     );
     const mainLine = lineCalls.find((l: string) =>
-      l.includes('Brush teeth-1'),
+      l.includes('吃两粒钙片'),
     );
     expect(mainLine).toContain('[x]');
-    // The started time should be preserved (DONE does not resync the leading time)
+    // STARTED time must survive the DOING→DONE transition
     expect(mainLine).toContain('06:15');
+    expect(mainLine).not.toContain('05:35');
   });
 });

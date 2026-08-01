@@ -231,6 +231,26 @@ export class TaskWriter {
     }
 
     const completed = keywordManagerInstance.isCompleted(newState);
+
+    // 🔴 STARTED-time sync (Hermes fork, user-mandated 2026-08-02):
+    // If the task has already been marked DOING (startedDate is set), the
+    // reserved leading HH:mm slot must reflect the ACTUAL start time, not the
+    // pre-scheduled placeholder. Without this, a DOING→DONE transition rebuilds
+    // the line from task.rawText (which still carries the old placeholder) and
+    // the synced time reverts. Applying it here covers every state transition
+    // (DOING, DONE, TODO, archived, …) uniformly.
+    if (task.startedDate && isCheckbox) {
+      const shh = String(task.startedDate.getHours()).padStart(2, '0');
+      const smm = String(task.startedDate.getMinutes()).padStart(2, '0');
+      const shhmm = `${shh}:${smm}`;
+      const sm = newLine.match(
+        /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\d{1,2}:\d{2})(\s.*)$/,
+      );
+      if (sm) {
+        newLine = `${sm[1]}${shhmm}${sm[3]}`;
+      }
+    }
+
     return { newLine, completed };
   }
 
