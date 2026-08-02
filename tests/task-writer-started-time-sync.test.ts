@@ -193,7 +193,7 @@ describe('TaskWriter — STARTED time syncs leading HH:mm', () => {
     expect(outputLines.join('\n')).toContain('STARTED: [2026-08-02');
   });
 
-  it('leaves lines without a leading HH:mm untouched', async () => {
+  it('no leading HH:mm: inserts the started time when marking DOING (Vault API)', async () => {
     mockNow(6, 15, 4);
     mockApp.workspace.getActiveViewOfType = jest.fn().mockReturnValue(null);
     mockApp.vault.getAbstractFileByPath = jest
@@ -212,9 +212,40 @@ describe('TaskWriter — STARTED time syncs leading HH:mm', () => {
     const callback = mockApp.vault.process.mock.calls[0][1];
     const output = callback('- [ ] TODO Brush teeth-1 <sup>3 min</sup>\n');
     const outputLines = output.split('\n');
-    // No leading HH:mm existed → no "HH:mm DOING" corruption; keyword swap still happens
+    // No leading HH:mm existed → the started time is INSERTED:
+    // "- [ ] TODO ..." → "- [/] 06:15 DOING ..."
     expect(outputLines[0]).toContain('[/]');
-    expect(outputLines[0]).not.toMatch(/\[\/\] \d{2}:\d{2} DOING/);
+    expect(outputLines[0]).toMatch(/\[\/\] 06:15 DOING Brush teeth-1/);
+    // STARTED line still inserted below
+    expect(outputLines.join('\n')).toContain('STARTED: [2026-08-02');
+  });
+
+  it('no leading HH:mm: inserts the started time when marking DOING (Editor API)', async () => {
+    mockNow(6, 15, 4);
+    const { mockEditor } = setupEditorMock(mockApp, [
+      '- [ ] TODO 喝水 500ml <sup>3 min</sup>',
+      '',
+    ]);
+    const task: Task = createBaseTask({
+      rawText: '- [ ] TODO 喝水 500ml <sup>3 min</sup>',
+      state: 'TODO',
+      completed: false,
+    });
+    Object.assign(task, { line: 0 });
+
+    await taskWriter.applyLineUpdate(task, 'DOING');
+
+    const lineCalls = mockEditor.replaceRange.mock.calls.map(
+      (c: any[]) => c[0],
+    );
+    const taskLineCalls = lineCalls.filter((l: string) =>
+      l.includes('喝水 500ml'),
+    );
+    const mainLine = taskLineCalls[taskLineCalls.length - 1];
+    expect(mainLine).toBeTruthy();
+    expect(mainLine).toMatch(/\[\/\] 06:15 DOING 喝水 500ml/);
+    // A STARTED line must be inserted below
+    expect(lineCalls.find((l: string) => l.includes('STARTED:'))).toBeTruthy();
   });
 
   it('DONE keeps the STARTED time, not the old reserved placeholder (regression: DOING→DONE reverted time)', async () => {

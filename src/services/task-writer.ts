@@ -238,17 +238,11 @@ export class TaskWriter {
     // pre-scheduled placeholder. Without this, a DOING→DONE transition rebuilds
     // the line from task.rawText (which still carries the old placeholder) and
     // the synced time reverts. Applying it here covers every state transition
-    // (DOING, DONE, TODO, archived, …) uniformly.
+    // (DOING, DONE, TODO, archived, …) uniformly. A line WITHOUT a leading
+    // HH:mm slot gets the started time inserted (user-requested 2026-08-03:
+    // `- [ ] TODO 喝水 500ml` → `- [/] 05:27 DOING 喝水 500ml`).
     if (task.startedDate && isCheckbox) {
-      const shh = String(task.startedDate.getHours()).padStart(2, '0');
-      const smm = String(task.startedDate.getMinutes()).padStart(2, '0');
-      const shhmm = `${shh}:${smm}`;
-      const sm = newLine.match(
-        /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\d{1,2}:\d{2})(\s.*)$/,
-      );
-      if (sm) {
-        newLine = `${sm[1]}${shhmm}${sm[3]}`;
-      }
+      newLine = TaskWriter.applyStartedTimeToLine(newLine, task.startedDate);
     }
 
     return { newLine, completed };
@@ -834,13 +828,48 @@ export class TaskWriter {
   /**
    * Sync the task line's leading HH:mm slot with the actual started time.
    *
+   * Pure formatter shared by all three write paths (Editor API, Vault API,
+   * and the line-rebuild path inside generateTaskLine):
+   *
+   * - Line already carries a reserved leading HH:mm slot
+   *   (`- [/] 00:31 DOING Brush teeth-1 <sup>3 min</sup>`): the slot is
+   *   overwritten with the actual started time.
+   * - Line has NO leading HH:mm slot (`- [ ] TODO 喝水 500ml <sup>3 min</sup>`):
+   *   a slot is INSERTED (`- [/] 05:27 DOING 喝水 500ml <sup>3 min</sup>`).
+   * - Any other line shape is returned unchanged.
+   */
+  static applyStartedTimeToLine(line: string, startedDate: Date): string {
+    const hh = String(startedDate.getHours()).padStart(2, '0');
+    const mm = String(startedDate.getMinutes()).padStart(2, '0');
+    const hhmm = `${hh}:${mm}`;
+    // Match "- [/] 00:31 DOING ..." (checkbox + leading HH:mm + rest)
+    const withSlot = line.match(
+      /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\d{1,2}:\d{2})(\s.*)$/,
+    );
+    if (withSlot) {
+      return `${withSlot[1]}${hhmm}${withSlot[3]}`;
+    }
+    // Match "- [/] DOING ..." (checkbox + rest, no leading HH:mm)
+    const noSlot = line.match(
+      /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\S.*)$/,
+    );
+    if (noSlot) {
+      return `${noSlot[1]}${hhmm} ${noSlot[2]}`;
+    }
+    return line;
+  }
+
+  /**
+   * Sync the task line's leading HH:mm slot with the actual started time.
+   *
    * Tasks carry a reserved HH:mm prefix (e.g. `- [/] 00:31 DOING Brush teeth-1`)
    * that was scheduled ahead of time. When the task is actually marked DOING
    * and a STARTED: timestamp is written, this reserved time no longer reflects
    * reality — so we overwrite the leading HH:mm with the started time.
    *
-   * Only touches the leading time slot (checkbox → HH:mm → keyword). Lines
-   * without a leading HH:mm are left untouched.
+   * Lines without a leading HH:mm get the started time INSERTED (so a plain
+   * `- [ ] TODO 喝水 500ml` becomes `- [/] 05:27 DOING 喝水 500ml` when the
+   * user marks it DOING). Only checkbox task lines are touched.
    */
   private syncTaskLineStartedTime(
     lines: string[],
@@ -850,18 +879,10 @@ export class TaskWriter {
     if (task.line < 0 || task.line >= lines.length) {
       return;
     }
-    const line = lines[task.line];
-    const hh = String(startedDate.getHours()).padStart(2, '0');
-    const mm = String(startedDate.getMinutes()).padStart(2, '0');
-    const hhmm = `${hh}:${mm}`;
-    // Match "- [/] 00:31 DOING ..." (checkbox + leading HH:mm + rest)
-    const m = line.match(
-      /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\d{1,2}:\d{2})(\s.*)$/,
+    lines[task.line] = TaskWriter.applyStartedTimeToLine(
+      lines[task.line],
+      startedDate,
     );
-    if (!m) {
-      return; // no leading time slot — leave unchanged
-    }
-    lines[task.line] = `${m[1]}${hhmm}${m[3]}`;
   }
 
   /**
@@ -877,18 +898,13 @@ export class TaskWriter {
     if (typeof line !== 'string') {
       return;
     }
-    const hh = String(startedDate.getHours()).padStart(2, '0');
-    const mm = String(startedDate.getMinutes()).padStart(2, '0');
-    const hhmm = `${hh}:${mm}`;
-    const m = line.match(
-      /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\d{1,2}:\d{2})(\s.*)$/,
-    );
-    if (!m) {
-      return;
-    }
     const from: EditorPosition = { line: task.line, ch: 0 };
     const to: EditorPosition = { line: task.line, ch: line.length };
-    editor.replaceRange(`${m[1]}${hhmm}${m[3]}`, from, to);
+    editor.replaceRange(
+      TaskWriter.applyStartedTimeToLine(line, startedDate),
+      from,
+      to,
+    );
   }
 
   /**
