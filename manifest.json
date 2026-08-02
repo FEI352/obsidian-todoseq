@@ -2,9 +2,9 @@
 	"id": "todoseq",
 	"name": "TODOseq",
 	"minAppVersion": "1.11.0",
-	"description": "Lightweight keyword-based task tracker using Logseq style keywords.",
+	"description": "Logseq-style task tracker fork: 简体中文界面 (i18n), automatic STARTED/CLOSED timestamps with in-line HH:mm sync, JSONL task timeline, extended checkboxes. Built for daily-note scheduling.",
 	"author": "Jau Puihing & Stephen Cross",
 	"authorUrl": "https://github.com/FEI352/obsidian-todoseq",
 	"isDesktopOnly": false,
-	"version": "0.20.22"
+	"version": "0.20.23"
 }

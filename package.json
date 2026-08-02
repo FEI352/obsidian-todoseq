@@ -1,7 +1,7 @@
 {
   "name": "todoseq",
-  "version": "0.20.22",
-  "description": "TODOseq lightweight, keyword-based task tracker for Obsidian",
+  "version": "0.20.23",
+  "description": "TODOseq fork: Logseq-style keyword task tracker with 简体中文 UI (i18n), automatic STARTED/CLOSED timestamps + in-line HH:mm sync, JSONL task timeline, extended checkboxes ([/], [-]), HH:mm-prefixed task support for daily-note scheduling",
   "license": "MIT",
   "author": "Stephen Cross",
   "main": "main.js",
