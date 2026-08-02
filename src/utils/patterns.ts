@@ -60,7 +60,7 @@ export const CHECKBOX_PATTERN_SOURCE = CHECKBOX_PATTERN.source;
  * 5: Rest of the text (optional)
  */
 export const CHECKBOX_REGEX =
-  /^(\s*)([-*+]\s*\[([ xX\-/])\])\s+([^\s]+)(?:\s+(.+))?$/;
+  /^(\s*)([-*+]\s*\[([ xX/\-!?<>])\])\s+([^\s]+)(?:\s+(.+))?$/;
 
 /**
  * Simple checkbox detection regex (without capture groups for state).
@@ -80,7 +80,8 @@ export const CHECKBOX_REGEX =
  *   1 = list marker (`-` / `*` / `+`) or `undefined` for bare checkbox
  *   2 = checkbox status (`x` / `X` / ` ` / `-` / `/`)
  */
-export const CHECKBOX_DETECTION_REGEX = /^\s*(?:([-*+])\s+)?\[([ xX\-/])\]\s*/;
+export const CHECKBOX_DETECTION_REGEX =
+  /^\s*(?:([-*+])\s+)?\[([ xX/\-!?<>])\]\s*/;
 
 // ============================================================================
 // Prefix Patterns

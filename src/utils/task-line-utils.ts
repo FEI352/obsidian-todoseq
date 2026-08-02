@@ -89,8 +89,8 @@ export function findDateLine(
  * @returns true if the line appears to be a task
  */
 function isTaskLine(line: string, keywordManager: KeywordManager): boolean {
-  // Check for checkbox pattern: - [ ] or - [x]
-  if (/^[\s]*- \[[ x]\]/i.test(line)) {
+  // Check for checkbox pattern: - [ ] / - [x] / - [!] / - [?] / - [<] etc.
+  if (/^[\s]*- \[[ xX/\-!?<>]\]/i.test(line)) {
     return true;
   }
 

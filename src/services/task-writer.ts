@@ -182,7 +182,7 @@ export class TaskWriter {
         const updatedWithoutQuote = textWithoutQuote
           // Replace the checkbox state char first so the keyword swap below
           // doesn't accidentally hit it.
-          .replace(/\[[ xX\-/]\]/, `[${newCheckboxChar}]`)
+          .replace(/\[[ xX/\-!?<>]\]/, `[${newCheckboxChar}]`)
           // Then swap the keyword itself.
           .replace(task.state, newState);
         newLine = `${indentWithoutQuote}${quotePrefix}${updatedWithoutQuote}`;
@@ -863,14 +863,14 @@ export class TaskWriter {
     const hhmm = `${hh}:${mm}`;
     // Match "- [/] 00:31 DOING ..." (checkbox + leading HH:mm + rest)
     const withSlot = line.match(
-      /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\d{1,2}:\d{2})(\s.*)$/,
+      /^(\s*[-*+]\s*\[[ xX/\-!?<>]\]\s+)(\d{1,2}:\d{2})(\s.*)$/,
     );
     if (withSlot) {
       return `${withSlot[1]}${hhmm}${withSlot[3]}`;
     }
     // Match "- [/] DOING ..." (checkbox + rest, no leading HH:mm)
     const noSlot = line.match(
-      /^(\s*[-*+]\s*\[[ xX/\-]\]\s+)(\S.*)$/,
+      /^(\s*[-*+]\s*\[[ xX/\-!?<>]\]\s+)(\S.*)$/,
     );
     if (noSlot) {
       return `${noSlot[1]}${hhmm} ${noSlot[2]}`;
