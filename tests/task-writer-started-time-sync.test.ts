@@ -277,4 +277,44 @@ describe('TaskWriter — STARTED time syncs leading HH:mm', () => {
     expect(mainLine).toContain('06:15');
     expect(mainLine).not.toContain('05:35');
   });
+
+  it('full chain TODO→DOING→DONE keeps the inserted HH:mm across both transitions (Editor API)', async () => {
+    mockNow(6, 15, 4);
+    const { mockEditor } = setupEditorMock(mockApp, [
+      '- [ ] TODO 喝水 500ml <sup>3 min</sup>',
+      '',
+    ]);
+    const task: Task = createBaseTask({
+      rawText: '- [ ] TODO 喝水 500ml <sup>3 min</sup>',
+      state: 'TODO',
+      completed: false,
+    });
+    Object.assign(task, { line: 0 });
+
+    // 1) TODO → DOING: HH:mm gets inserted
+    const doingResult = await taskWriter.applyLineUpdate(task, 'DOING');
+    expect(doingResult.rawText).toMatch(/\[\/\] 06:15 DOING 喝水 500ml/);
+
+    // 2) DOING → DONE: the synced HH:mm must survive (regression: it vanished)
+    const doneTask: Task = {
+      ...doingResult,
+      state: 'DOING',
+      completed: false,
+      rawText: doingResult.rawText,
+      line: 0,
+    };
+    await taskWriter.applyLineUpdate(doneTask, 'DONE');
+
+    const lineCalls = mockEditor.replaceRange.mock.calls.map(
+      (c: any[]) => c[0],
+    );
+    const taskLineCalls = lineCalls.filter((l: string) =>
+      l.includes('喝水 500ml'),
+    );
+    const mainLine = taskLineCalls[taskLineCalls.length - 1];
+    expect(mainLine).toBeTruthy();
+    expect(mainLine).toContain('[x]');
+    expect(mainLine).toContain('06:15');
+    expect(mainLine).toContain('DONE 喝水 500ml');
+  });
 });

@@ -269,6 +269,13 @@ export class TaskWriter {
       keepPriority,
       this.keywordManager,
     );
+    // The actual line that ends up on disk. generateTaskLine's output may
+    // differ from the final written line: marking DOING inserts/overwrites
+    // the leading HH:mm slot via syncTaskLineStartedTime* AFTER the initial
+    // replaceRange, so we must re-read the written line to keep the returned
+    // snapshot in sync with the file (otherwise the state manager keeps a
+    // stale rawText without HH:mm and the next transition drops the time).
+    let writtenLine = newLine;
 
     // Check if the new state is an active/in-progress keyword (DOING, NOW, etc.)
     const isActiveState = newState !== '' && this.keywordManager?.isActive(newState);
@@ -368,6 +375,11 @@ export class TaskWriter {
             this.syncTaskLineStartedTime(lines, task, new Date());
           }
 
+          // Capture the final written task line (may include the synced HH:mm)
+          if (task.line < lines.length) {
+            writtenLine = lines[task.line];
+          }
+
           return lines.join('\n');
         });
       }
@@ -403,6 +415,13 @@ export class TaskWriter {
         );
         lineDelta += startedResult.lineDelta;
         updatedStartedDate = startedResult.task.startedDate;
+        // updateTaskStartedDate may have synced the leading HH:mm slot via
+        // the Editor API — re-read the actual task line so the returned
+        // snapshot carries the synced time (not the pre-sync newLine).
+        const syncedLine = editor.getLine(task.line);
+        if (typeof syncedLine === 'string') {
+          writtenLine = syncedLine;
+        }
       }
     } else if (!isSourceMode || forceVaultApi) {
       // For non-source mode, CLOSED date was handled atomically above
@@ -424,7 +443,7 @@ export class TaskWriter {
     // Include lineDelta for the coordinator to adjust subsequent task indices
     const result: Task & { lineDelta?: number } = {
       ...task,
-      rawText: newLine,
+      rawText: writtenLine,
       state: newState,
       completed,
       closedDate: updatedClosedDate,
