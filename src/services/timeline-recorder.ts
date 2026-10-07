@@ -69,8 +69,11 @@ export class TimeLineRecorder {
         const title = newTask.text || newTask.rawText;
         const events: TimelineEvent[] = [];
 
+        const oldStateUpper = (oldTask.state || '').toUpperCase();
+        const newStateUpper = (newTask.state || '').toUpperCase();
+
         // Todo → Doing (start)
-        if (!oldTask.completed && oldTask.state !== 'DOING' && newTask.state === 'DOING') {
+        if (!oldTask.completed && oldStateUpper !== 'DOING' && newStateUpper === 'DOING') {
             events.push({
                 id, file: newTask.path, line: newTask.line,
                 action: 'start', at: new Date().toISOString(),
@@ -80,19 +83,19 @@ export class TimeLineRecorder {
         }
 
         // Todo → Done directly (start+done at same time)
-        if (!oldTask.completed && !oldTask.state.match(/DOING|NOW|IN-PROGRESS/) &&
+        if (!oldTask.completed && !oldStateUpper.match(/DOING|NOW|IN-PROGRESS/) &&
             newTask.completed && !events.some(e => e.action === 'start')) {
             const now = new Date().toISOString();
             events.push({
                 id, file: newTask.path, line: newTask.line,
                 action: 'start', at: now,
-                state: 'DOING', title,
+                state: newTask.state || 'DOING', title,
                 tags: newTask.tags,
             });
         }
 
         // Doing → Done
-        if (oldTask.state === 'DOING' && newTask.completed) {
+        if (oldStateUpper === 'DOING' && newTask.completed) {
             events.push({
                 id, file: newTask.path, line: newTask.line,
                 action: 'done', at: new Date().toISOString(),
@@ -102,7 +105,7 @@ export class TimeLineRecorder {
         }
 
         // Any → Completed (no DOING intermediate)
-        if (oldTask.state !== 'DOING' && newTask.completed && !events.some(e => e.action === 'done')) {
+        if (oldStateUpper !== 'DOING' && newTask.completed && !events.some(e => e.action === 'done')) {
             events.push({
                 id, file: newTask.path, line: newTask.line,
                 action: 'done', at: new Date().toISOString(),
@@ -112,7 +115,7 @@ export class TimeLineRecorder {
         }
 
         // Any → Cancelled
-        if (!oldTask.completed && newTask.state === 'CANCELED') {
+        if (!oldTask.completed && newStateUpper === 'CANCELED') {
             events.push({
                 id, file: newTask.path, line: newTask.line,
                 action: 'cancel', at: new Date().toISOString(),
@@ -122,7 +125,7 @@ export class TimeLineRecorder {
         }
 
         // Any other state change (cycle)
-        if (oldTask.state !== newTask.state && newTask.state !== 'CANCELED' && !newTask.completed && oldTask.state !== 'DOING' && newTask.state !== 'DOING') {
+        if (oldStateUpper !== newStateUpper && newStateUpper !== 'CANCELED' && !newTask.completed && oldStateUpper !== 'DOING' && newStateUpper !== 'DOING') {
             events.push({
                 id, file: newTask.path, line: newTask.line,
                 action: 'cycle', at: new Date().toISOString(),
