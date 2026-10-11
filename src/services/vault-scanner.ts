@@ -609,9 +609,15 @@ export class VaultScanner
 
   // Utility method to yield to event loop
   private async yieldToEventLoop(): Promise<void> {
-    await new Promise<void>((resolve) =>
-      window.requestAnimationFrame(() => resolve()),
-    );
+    await new Promise<void>((resolve) => {
+      if (typeof MessageChannel !== "undefined") {
+        const channel = new MessageChannel();
+        channel.port1.onmessage = () => resolve();
+        channel.port2.postMessage(null);
+      } else {
+        setTimeout(resolve, 0);
+      }
+    });
   }
 
   // Clean up resources
